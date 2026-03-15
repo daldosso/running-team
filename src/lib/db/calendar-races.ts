@@ -1,8 +1,19 @@
 /**
  * Gare estratte dal Calendario Corse province Va-Mi-No-Vb-Co-Bi-Vc-Mb-PV-Lc.
- * Formato: { date: "YYYY-MM-DD", type, name, location, province, distance, time, infoUrl }
+ * distance, time, infoUrl sono opzionali (alcune gare non li hanno).
  */
-export const CALENDAR_RACES = [
+export type CalendarRaceEntry = {
+  date: string;
+  type: string;
+  name: string;
+  location: string;
+  province?: string | null;
+  distance?: string | null;
+  time?: string | null;
+  infoUrl?: string | null;
+};
+
+export const CALENDAR_RACES: CalendarRaceEntry[] = [
   { date: "2026-02-07", type: "CROSS", name: "3° tappa Campionato Brianzolo di Corsa Campestre", location: "AGRATE BRIANZA", province: "MB", distance: "6/3", time: "14.30", infoUrl: "www.campionatobrianzolo.it" },
   { date: "2026-02-07", type: "CROSS", name: "Cross Città di Oleggio", location: "OLEGGIO", province: "NO", distance: "6/4", time: "15.30", infoUrl: "www.piemonte.fidal.it" },
   { date: "2026-02-07", type: "TRAIL", name: "Urban Night Trail", location: "BERGAMO", province: "BG", distance: "12.5", time: "18.00", infoUrl: "www.followyourpassion.it" },
@@ -83,4 +94,4 @@ export const CALENDAR_RACES = [
   { date: "2026-11-08", type: "MEZZA", name: "Maratonina Città di Busto Arsizio", location: "BUSTO ARSIZIO", province: "VA", distance: "21.097", infoUrl: "www.maratoninadibusto.it" },
   { date: "2026-11-22", type: "CROSS", name: "5 mulini", location: "SAN VITTORE OLONA", province: "MI", infoUrl: "www.cinquemulini.org" },
   { date: "2026-11-22", type: "MEZZA", name: "Milano Half Marathon Milano 21", location: "MILANO", province: "MI", distance: "21.097/10", infoUrl: "www.followyourpassion.it" },
-] as const;
+];
