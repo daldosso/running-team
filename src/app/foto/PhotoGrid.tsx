@@ -75,7 +75,9 @@ export function PhotoGrid({
                 </p>
               )}
               <form
-                action={deletePhoto.bind(null, p.id)}
+                action={async () => {
+                  await deletePhoto(p.id);
+                }}
                 onSubmit={(e) => {
                   if (!confirm("Eliminare questa foto?")) e.preventDefault();
                 }}
