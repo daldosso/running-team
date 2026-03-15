@@ -56,7 +56,11 @@ export function CarSharingSection({
                       <span className="ml-1 text-zinc-400"> – {d.notes}</span>
                     )}
                   </span>
-                  <form action={removeCarSharing.bind(null, raceId, d.memberId)}>
+                  <form
+                    action={async () => {
+                      await removeCarSharing(raceId, d.memberId);
+                    }}
+                  >
                     <button
                       type="submit"
                       className="text-red-600 hover:underline dark:text-red-400"
@@ -85,7 +89,11 @@ export function CarSharingSection({
                       <span className="ml-1 text-zinc-400"> – {p.notes}</span>
                     )}
                   </span>
-                  <form action={removeCarSharing.bind(null, raceId, p.memberId)}>
+                  <form
+                    action={async () => {
+                      await removeCarSharing(raceId, p.memberId);
+                    }}
+                  >
                     <button
                       type="submit"
                       className="text-red-600 hover:underline dark:text-red-400"

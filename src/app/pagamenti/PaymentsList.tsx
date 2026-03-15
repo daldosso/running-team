@@ -78,7 +78,11 @@ export function PaymentsList({
               <td className="px-4 py-3">
                 <div className="flex gap-2">
                   {p.status === "pending" && (
-                    <form action={updatePaymentStatus.bind(null, p.id, "completed")}>
+                    <form
+                      action={async () => {
+                        await updatePaymentStatus(p.id, "completed");
+                      }}
+                    >
                       <button
                         type="submit"
                         className="text-green-600 hover:underline dark:text-green-400"
@@ -88,7 +92,9 @@ export function PaymentsList({
                     </form>
                   )}
                   <form
-                    action={deletePayment.bind(null, p.id)}
+                    action={async () => {
+                      await deletePayment(p.id);
+                    }}
                     onSubmit={(e) => {
                       if (!confirm("Eliminare questo pagamento?")) e.preventDefault();
                     }}

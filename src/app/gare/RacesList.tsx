@@ -57,7 +57,9 @@ export function RacesList({ races: list }: { races: Race[] }) {
               <td className="px-4 py-3 text-zinc-500">{r.distance ?? "—"}</td>
               <td className="px-4 py-3">
                 <form
-                  action={deleteRace.bind(null, r.id)}
+                  action={async () => {
+                    await deleteRace(r.id);
+                  }}
                   onSubmit={(e) => {
                     if (!confirm("Eliminare questa gara dall'elenco?")) e.preventDefault();
                   }}

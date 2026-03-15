@@ -50,7 +50,9 @@ export function ParticipantsList({
               <td className="px-4 py-3 text-zinc-500">{p.notes ?? "—"}</td>
               <td className="px-4 py-3">
                 <form
-                  action={removeParticipant.bind(null, raceId, p.memberId)}
+                  action={async () => {
+                    await removeParticipant(raceId, p.memberId);
+                  }}
                   onSubmit={(e) => {
                     if (!confirm("Rimuovere questo partecipante dalla gara?")) e.preventDefault();
                   }}

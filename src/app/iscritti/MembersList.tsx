@@ -40,7 +40,9 @@ export function MembersList({ members: list }: { members: Member[] }) {
               </td>
               <td className="px-4 py-3">
                 <form
-                  action={deleteMember.bind(null, m.id)}
+                  action={async () => {
+                    await deleteMember(m.id);
+                  }}
                   onSubmit={(e) => {
                     if (!confirm("Eliminare questo iscritto?")) e.preventDefault();
                   }}
