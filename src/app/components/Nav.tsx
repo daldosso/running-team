@@ -49,6 +49,12 @@ export function Nav() {
           >
             Foto
           </Link>
+          <Link
+            href="/eventi"
+            className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+          >
+            Eventi
+          </Link>
         </div>
       </div>
     </nav>

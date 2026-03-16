@@ -213,6 +213,52 @@ export const photos = pgTable(
   ]
 );
 
+// Eventi (allenamenti, riunioni, serate, ecc.)
+export const events = pgTable(
+  "events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    description: text("description"),
+    date: text("date").notNull(), // YYYY-MM-DD
+    time: text("time"), // HH:MM
+    location: text("location"),
+    raceId: uuid("race_id").references(() => races.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("events_org_idx").on(table.organizationId),
+    index("events_date_idx").on(table.date),
+  ]
+);
+
+// Partecipazione iscritto → evento
+export const eventParticipants = pgTable(
+  "event_participants",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    memberId: uuid("member_id")
+      .notNull()
+      .references(() => members.id, { onDelete: "cascade" }),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("event_participants_event_idx").on(table.eventId),
+    index("event_participants_member_idx").on(table.memberId),
+  ]
+);
+
 export type Organization = typeof organizations.$inferSelect;
 export type NewOrganization = typeof organizations.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -229,3 +275,7 @@ export type CarSharing = typeof carSharing.$inferSelect;
 export type NewCarSharing = typeof carSharing.$inferInsert;
 export type Photo = typeof photos.$inferSelect;
 export type NewPhoto = typeof photos.$inferInsert;
+export type Event = typeof events.$inferSelect;
+export type NewEvent = typeof events.$inferInsert;
+export type EventParticipant = typeof eventParticipants.$inferSelect;
+export type NewEventParticipant = typeof eventParticipants.$inferInsert;
