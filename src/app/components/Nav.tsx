@@ -3,11 +3,11 @@ import Link from "next/link";
 
 export function Nav() {
   return (
-    <nav className="border-b border-zinc-200 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4">
+    <nav className="border-b border-zinc-200 bg-white/80 shadow-[0_6px_30px_rgba(3,8,20,0.35)] backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
+      <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4">
         <Link
           href="/"
-          className="flex items-center gap-2 font-semibold text-zinc-900 dark:text-white"
+          className="flex items-center gap-2 text-base font-semibold text-zinc-900 dark:text-white"
         >
           <Image
             src="/running-team-logo.png"
@@ -18,40 +18,40 @@ export function Nav() {
           />
           Running Team
         </Link>
-        <div className="flex gap-4">
+        <div className="flex items-center gap-2">
           <Link
             href="/"
-            className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+            className="rounded-full border border-transparent px-3 py-1 text-sm font-medium text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-white"
           >
             Dashboard
           </Link>
           <Link
             href="/iscritti"
-            className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+            className="rounded-full border border-transparent px-3 py-1 text-sm font-medium text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-white"
           >
             Iscritti
           </Link>
           <Link
             href="/pagamenti"
-            className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+            className="rounded-full border border-transparent px-3 py-1 text-sm font-medium text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-white"
           >
             Pagamenti
           </Link>
           <Link
             href="/gare"
-            className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+            className="rounded-full border border-transparent px-3 py-1 text-sm font-medium text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-white"
           >
             Gare
           </Link>
           <Link
             href="/foto"
-            className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+            className="rounded-full border border-transparent px-3 py-1 text-sm font-medium text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-white"
           >
             Foto
           </Link>
           <Link
             href="/eventi"
-            className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+            className="rounded-full border border-transparent px-3 py-1 text-sm font-medium text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-white"
           >
             Eventi
           </Link>
