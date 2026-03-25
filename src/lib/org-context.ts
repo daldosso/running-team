@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { getSession } from "@/lib/auth";
 
 /**
  * Contesto organizzazione per multi-tenant.
@@ -6,6 +7,8 @@ import { cookies } from "next/headers";
  */
 export async function getOrganizationId(): Promise<string | null> {
   if (typeof window !== "undefined") return null;
+  const session = await getSession();
+  if (session?.orgId) return session.orgId;
   const cookieStore = await cookies();
   const fromCookie = cookieStore.get("running-team-org-id")?.value;
   if (fromCookie) return fromCookie;

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { LogoutButton } from "./LogoutButton";
 
 export function Nav() {
   return (
@@ -18,7 +19,7 @@ export function Nav() {
           />
           Running Team
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-1 items-center gap-2">
           <Link
             href="/"
             className="rounded-full border border-transparent px-3 py-1 text-sm font-medium text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-white"
@@ -55,6 +56,8 @@ export function Nav() {
           >
             Eventi
           </Link>
+          <div className="flex-1" />
+          <LogoutButton />
         </div>
       </div>
     </nav>
