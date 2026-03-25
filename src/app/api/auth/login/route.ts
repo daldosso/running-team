@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import { organizationMembers, users } from "@/lib/db/schema";
 import { createSessionCookie } from "@/lib/auth";
 import { cookies } from "next/headers";
 
@@ -31,6 +31,20 @@ export async function POST(request: Request) {
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) {
     return NextResponse.json({ error: "Credenziali non valide" }, { status: 401 });
+  }
+
+  // assicura che esista la membership sull'org di default
+  const existing = await db
+    .select({ id: organizationMembers.id })
+    .from(organizationMembers)
+    .where(eq(organizationMembers.userId, user.id))
+    .limit(1);
+  if (existing.length === 0) {
+    await db.insert(organizationMembers).values({
+      organizationId: user.organizationId,
+      userId: user.id,
+      role: user.role,
+    });
   }
 
   await createSessionCookie({

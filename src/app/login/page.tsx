@@ -20,6 +20,13 @@ function LoginInner() {
           Inserisci email e password per continuare.
         </p>
 
+        <a
+          href={`/api/auth/google?next=${encodeURIComponent(nextPath)}`}
+          className="mt-4 inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white px-6 py-3 text-base font-medium text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white dark:hover:bg-zinc-800"
+        >
+          Continua con Google
+        </a>
+
         <form
           className="mt-6 space-y-4"
           onSubmit={async (e) => {

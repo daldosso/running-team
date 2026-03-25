@@ -43,6 +43,7 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash"),
   name: text("name"),
+  // org di default/attiva iniziale (per compatibilità e onboarding semplice)
   organizationId: uuid("organization_id")
     .notNull()
     .references(() => organizations.id, { onDelete: "cascade" }),
@@ -54,6 +55,29 @@ export const users = pgTable("users", {
     .defaultNow()
     .notNull(),
 });
+
+// Membership utente ↔ organizzazione (multi-tenant vero)
+export const organizationMembers = pgTable(
+  "organization_members",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    role: userRoleEnum("role").notNull().default("member"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("org_members_org_idx").on(table.organizationId),
+    index("org_members_user_idx").on(table.userId),
+    uniqueIndex("org_members_unique").on(table.organizationId, table.userId),
+  ]
+);
 
 // Iscritti (membri della squadra di corsa)
 export const members = pgTable(
@@ -263,6 +287,8 @@ export type Organization = typeof organizations.$inferSelect;
 export type NewOrganization = typeof organizations.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+export type OrganizationMember = typeof organizationMembers.$inferSelect;
+export type NewOrganizationMember = typeof organizationMembers.$inferInsert;
 export type Member = typeof members.$inferSelect;
 export type NewMember = typeof members.$inferInsert;
 export type Payment = typeof payments.$inferSelect;
