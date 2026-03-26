@@ -18,19 +18,19 @@ export function MembersList({ members: list }: { members: Member[] }) {
   return (
     <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
       <div className="overflow-x-auto">
-        <table className="min-w-[1800px] w-full text-left text-sm whitespace-nowrap">
+        <table className="min-w-[2600px] w-full text-left text-sm whitespace-nowrap">
         <thead>
           <tr className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50">
-            <th className="px-4 py-3 font-medium">Nome</th>
-            <th className="px-4 py-3 font-medium">Tessera</th>
-            <th className="px-4 py-3 font-medium">Codice Fiscale</th>
+            <th className="px-4 py-3 font-medium min-w-[220px]">Nome</th>
+            <th className="px-4 py-3 font-medium min-w-[120px]">Tessera</th>
+            <th className="px-4 py-3 font-medium min-w-[220px]">Codice Fiscale</th>
             <th className="px-4 py-3 font-medium">Cat.</th>
-            <th className="px-4 py-3 font-medium">Status</th>
-            <th className="px-4 py-3 font-medium">Materiale 2026</th>
+            <th className="px-4 py-3 font-medium min-w-[180px]">Status</th>
+            <th className="px-4 py-3 font-medium min-w-[220px]">Materiale 2026</th>
             <th className="px-4 py-3 font-medium">Spedizione</th>
             <th className="px-4 py-3 font-medium">Genere</th>
-            <th className="px-4 py-3 font-medium">Email</th>
-            <th className="px-4 py-3 font-medium">Telefono</th>
+            <th className="px-4 py-3 font-medium min-w-[260px]">Email</th>
+            <th className="px-4 py-3 font-medium min-w-[160px]">Telefono</th>
             <th className="w-20 px-4 py-3" />
           </tr>
         </thead>
