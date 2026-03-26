@@ -106,6 +106,28 @@ export const members = pgTable(
     email: text("email").notNull(),
     phone: text("phone"),
     birthDate: text("birth_date"),
+    // Campi aggiuntivi profilo iscritto
+    tessera: text("tessera"),
+    luogoNascita: text("luogo_nascita"),
+    codiceFiscale: text("codice_fiscale"),
+    categoria: text("categoria"),
+    straniero: text("straniero"),
+    indirizzo: text("indirizzo"),
+    cap: text("cap"),
+    citta: text("citta"),
+    prov: text("prov"),
+    status: text("status"),
+    materiale2026Consegna: text("materiale_2026_consegnato"),
+    spedizione: text("spedizione"),
+    genere: text("genere"),
+    // Taglie
+    tagliaMagliaCotone: text("taglia_maglia_cotone"),
+    tagliaMagliaSolar: text("taglia_maglia_solar"),
+    tagliaMagliaPulsar: text("taglia_maglia_pulsar"),
+    tagliaCanottaSolar: text("taglia_canotta_solar"),
+    tagliaCanottaPulsar: text("taglia_canotta_pulsar"),
+    tagliaFelpaSolar: text("taglia_felpa_solar"),
+    tagliaFelpaPulsar: text("taglia_felpa_pulsar"),
     notes: text("notes"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
