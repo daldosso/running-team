@@ -12,6 +12,26 @@ export type MemberFormData = {
   email: string;
   phone?: string;
   birthDate?: string;
+  tessera?: string;
+  luogoNascita?: string;
+  codiceFiscale?: string;
+  categoria?: string;
+  straniero?: string;
+  indirizzo?: string;
+  cap?: string;
+  citta?: string;
+  prov?: string;
+  status?: string;
+  materiale2026Consegna?: string;
+  spedizione?: string;
+  genere?: string;
+  tagliaMagliaCotone?: string;
+  tagliaMagliaSolar?: string;
+  tagliaMagliaPulsar?: string;
+  tagliaCanottaSolar?: string;
+  tagliaCanottaPulsar?: string;
+  tagliaFelpaSolar?: string;
+  tagliaFelpaPulsar?: string;
   notes?: string;
 };
 
@@ -26,6 +46,26 @@ export async function createMember(formData: MemberFormData) {
     email: formData.email.trim().toLowerCase(),
     phone: formData.phone?.trim() || null,
     birthDate: formData.birthDate || null,
+    tessera: formData.tessera?.trim() || null,
+    luogoNascita: formData.luogoNascita?.trim() || null,
+    codiceFiscale: formData.codiceFiscale?.trim() || null,
+    categoria: formData.categoria?.trim() || null,
+    straniero: formData.straniero?.trim() || null,
+    indirizzo: formData.indirizzo?.trim() || null,
+    cap: formData.cap?.trim() || null,
+    citta: formData.citta?.trim() || null,
+    prov: formData.prov?.trim() || null,
+    status: formData.status?.trim() || null,
+    materiale2026Consegna: formData.materiale2026Consegna?.trim() || null,
+    spedizione: formData.spedizione?.trim() || null,
+    genere: formData.genere?.trim() || null,
+    tagliaMagliaCotone: formData.tagliaMagliaCotone?.trim() || null,
+    tagliaMagliaSolar: formData.tagliaMagliaSolar?.trim() || null,
+    tagliaMagliaPulsar: formData.tagliaMagliaPulsar?.trim() || null,
+    tagliaCanottaSolar: formData.tagliaCanottaSolar?.trim() || null,
+    tagliaCanottaPulsar: formData.tagliaCanottaPulsar?.trim() || null,
+    tagliaFelpaSolar: formData.tagliaFelpaSolar?.trim() || null,
+    tagliaFelpaPulsar: formData.tagliaFelpaPulsar?.trim() || null,
     notes: formData.notes?.trim() || null,
   });
   revalidatePath("/");
@@ -45,6 +85,26 @@ export async function updateMember(id: string, formData: MemberFormData) {
       email: formData.email.trim().toLowerCase(),
       phone: formData.phone?.trim() || null,
       birthDate: formData.birthDate || null,
+      tessera: formData.tessera?.trim() || null,
+      luogoNascita: formData.luogoNascita?.trim() || null,
+      codiceFiscale: formData.codiceFiscale?.trim() || null,
+      categoria: formData.categoria?.trim() || null,
+      straniero: formData.straniero?.trim() || null,
+      indirizzo: formData.indirizzo?.trim() || null,
+      cap: formData.cap?.trim() || null,
+      citta: formData.citta?.trim() || null,
+      prov: formData.prov?.trim() || null,
+      status: formData.status?.trim() || null,
+      materiale2026Consegna: formData.materiale2026Consegna?.trim() || null,
+      spedizione: formData.spedizione?.trim() || null,
+      genere: formData.genere?.trim() || null,
+      tagliaMagliaCotone: formData.tagliaMagliaCotone?.trim() || null,
+      tagliaMagliaSolar: formData.tagliaMagliaSolar?.trim() || null,
+      tagliaMagliaPulsar: formData.tagliaMagliaPulsar?.trim() || null,
+      tagliaCanottaSolar: formData.tagliaCanottaSolar?.trim() || null,
+      tagliaCanottaPulsar: formData.tagliaCanottaPulsar?.trim() || null,
+      tagliaFelpaSolar: formData.tagliaFelpaSolar?.trim() || null,
+      tagliaFelpaPulsar: formData.tagliaFelpaPulsar?.trim() || null,
       notes: formData.notes?.trim() || null,
       updatedAt: new Date(),
     })

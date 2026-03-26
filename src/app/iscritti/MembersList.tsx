@@ -17,10 +17,18 @@ export function MembersList({ members: list }: { members: Member[] }) {
 
   return (
     <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <table className="w-full text-left text-sm">
+      <div className="overflow-x-auto">
+        <table className="min-w-[1100px] w-full text-left text-sm">
         <thead>
           <tr className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50">
             <th className="px-4 py-3 font-medium">Nome</th>
+            <th className="px-4 py-3 font-medium">Tessera</th>
+            <th className="px-4 py-3 font-medium">Codice Fiscale</th>
+            <th className="px-4 py-3 font-medium">Cat.</th>
+            <th className="px-4 py-3 font-medium">Status</th>
+            <th className="px-4 py-3 font-medium">Materiale 2026</th>
+            <th className="px-4 py-3 font-medium">Spedizione</th>
+            <th className="px-4 py-3 font-medium">Genere</th>
             <th className="px-4 py-3 font-medium">Email</th>
             <th className="px-4 py-3 font-medium">Telefono</th>
             <th className="w-20 px-4 py-3" />
@@ -37,6 +45,27 @@ export function MembersList({ members: list }: { members: Member[] }) {
                 >
                   <td className="px-4 py-3">
                     {m.firstName} {m.lastName}
+                  </td>
+                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                    {m.tessera ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                    {m.codiceFiscale ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                    {m.categoria ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                    {m.status ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                    {m.materiale2026Consegna ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                    {m.spedizione ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                    {m.genere ?? "—"}
                   </td>
                   <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
                     {m.email}
@@ -77,7 +106,7 @@ export function MembersList({ members: list }: { members: Member[] }) {
                 </tr>
                 {isEditing && (
                   <tr>
-                    <td colSpan={4} className="border-b border-zinc-100 p-4">
+                    <td colSpan={11} className="border-b border-zinc-100 p-4">
                       <form
                         action={async (fd) => {
                           await updateMember(m.id, {
@@ -86,6 +115,34 @@ export function MembersList({ members: list }: { members: Member[] }) {
                             email: fd.get("email") as string,
                             phone: (fd.get("phone") as string) || undefined,
                             birthDate: (fd.get("birthDate") as string) || undefined,
+                            tessera: (fd.get("tessera") as string) || undefined,
+                            luogoNascita: (fd.get("luogoNascita") as string) || undefined,
+                            codiceFiscale: (fd.get("codiceFiscale") as string) || undefined,
+                            categoria: (fd.get("categoria") as string) || undefined,
+                            straniero: (fd.get("straniero") as string) || undefined,
+                            indirizzo: (fd.get("indirizzo") as string) || undefined,
+                            cap: (fd.get("cap") as string) || undefined,
+                            citta: (fd.get("citta") as string) || undefined,
+                            prov: (fd.get("prov") as string) || undefined,
+                            status: (fd.get("status") as string) || undefined,
+                            materiale2026Consegna:
+                              (fd.get("materiale2026Consegna") as string) || undefined,
+                            spedizione: (fd.get("spedizione") as string) || undefined,
+                            genere: (fd.get("genere") as string) || undefined,
+                            tagliaMagliaCotone:
+                              (fd.get("tagliaMagliaCotone") as string) || undefined,
+                            tagliaMagliaSolar:
+                              (fd.get("tagliaMagliaSolar") as string) || undefined,
+                            tagliaMagliaPulsar:
+                              (fd.get("tagliaMagliaPulsar") as string) || undefined,
+                            tagliaCanottaSolar:
+                              (fd.get("tagliaCanottaSolar") as string) || undefined,
+                            tagliaCanottaPulsar:
+                              (fd.get("tagliaCanottaPulsar") as string) || undefined,
+                            tagliaFelpaSolar:
+                              (fd.get("tagliaFelpaSolar") as string) || undefined,
+                            tagliaFelpaPulsar:
+                              (fd.get("tagliaFelpaPulsar") as string) || undefined,
                             notes: (fd.get("notes") as string) || undefined,
                           });
                           setEditingId(null);
@@ -152,6 +209,226 @@ export function MembersList({ members: list }: { members: Member[] }) {
                             />
                           </div>
                         </div>
+                        <div className="mt-4 grid gap-4 md:grid-cols-2">
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                              Tessera
+                            </label>
+                            <input
+                              name="tessera"
+                              defaultValue={m.tessera ?? ""}
+                              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                              Codice Fiscale
+                            </label>
+                            <input
+                              name="codiceFiscale"
+                              defaultValue={m.codiceFiscale ?? ""}
+                              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                            />
+                          </div>
+                        </div>
+                        <div className="mt-4 grid gap-4 md:grid-cols-2">
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                              Luogo nascita
+                            </label>
+                            <input
+                              name="luogoNascita"
+                              defaultValue={m.luogoNascita ?? ""}
+                              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                              Categoria (Cat.)
+                            </label>
+                            <input
+                              name="categoria"
+                              defaultValue={m.categoria ?? ""}
+                              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                            />
+                          </div>
+                        </div>
+                        <div className="mt-4 grid gap-4 md:grid-cols-2">
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                              Straniero
+                            </label>
+                            <input
+                              name="straniero"
+                              defaultValue={m.straniero ?? ""}
+                              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                              Genere
+                            </label>
+                            <input
+                              name="genere"
+                              defaultValue={m.genere ?? ""}
+                              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                            />
+                          </div>
+                        </div>
+                        <div className="mt-4 grid gap-4 md:grid-cols-2">
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                              Status
+                            </label>
+                            <input
+                              name="status"
+                              defaultValue={m.status ?? ""}
+                              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                              Materiale 2026 consegnato
+                            </label>
+                            <input
+                              name="materiale2026Consegna"
+                              defaultValue={m.materiale2026Consegna ?? ""}
+                              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                            />
+                          </div>
+                        </div>
+                        <div className="mt-4 grid gap-4 md:grid-cols-2">
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                              Spedizione
+                            </label>
+                            <input
+                              name="spedizione"
+                              defaultValue={m.spedizione ?? ""}
+                              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                              Indirizzo
+                            </label>
+                            <input
+                              name="indirizzo"
+                              defaultValue={m.indirizzo ?? ""}
+                              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                            />
+                          </div>
+                        </div>
+                        <div className="mt-4 grid gap-4 md:grid-cols-3">
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                              CAP
+                            </label>
+                            <input
+                              name="cap"
+                              defaultValue={m.cap ?? ""}
+                              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                              Città
+                            </label>
+                            <input
+                              name="citta"
+                              defaultValue={m.citta ?? ""}
+                              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                              Prov.
+                            </label>
+                            <input
+                              name="prov"
+                              defaultValue={m.prov ?? ""}
+                              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="mt-6 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+                          <p className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                            Taglie
+                          </p>
+                          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                                Maglia cotone
+                              </label>
+                              <input
+                                name="tagliaMagliaCotone"
+                                defaultValue={m.tagliaMagliaCotone ?? ""}
+                                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                                Maglia Solar
+                              </label>
+                              <input
+                                name="tagliaMagliaSolar"
+                                defaultValue={m.tagliaMagliaSolar ?? ""}
+                                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                                Maglia Pulsar
+                              </label>
+                              <input
+                                name="tagliaMagliaPulsar"
+                                defaultValue={m.tagliaMagliaPulsar ?? ""}
+                                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                                Canotta Solar
+                              </label>
+                              <input
+                                name="tagliaCanottaSolar"
+                                defaultValue={m.tagliaCanottaSolar ?? ""}
+                                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                                Canotta Pulsar
+                              </label>
+                              <input
+                                name="tagliaCanottaPulsar"
+                                defaultValue={m.tagliaCanottaPulsar ?? ""}
+                                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                                Felpa Solar
+                              </label>
+                              <input
+                                name="tagliaFelpaSolar"
+                                defaultValue={m.tagliaFelpaSolar ?? ""}
+                                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                                Felpa Pulsar
+                              </label>
+                              <input
+                                name="tagliaFelpaPulsar"
+                                defaultValue={m.tagliaFelpaPulsar ?? ""}
+                                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                              />
+                            </div>
+                          </div>
+                        </div>
                         <div className="mt-4">
                           <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
                             Note
@@ -187,6 +464,7 @@ export function MembersList({ members: list }: { members: Member[] }) {
           })}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
