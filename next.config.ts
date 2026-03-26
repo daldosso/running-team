@@ -13,6 +13,16 @@ const nextConfig: NextConfig = {
         hostname: "*.blob.vercel-storage.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "www.runfast.it",
+        pathname: "/wp-content/uploads/**",
+      },
+      {
+        protocol: "https",
+        hostname: "runfast.it",
+        pathname: "/wp-content/uploads/**",
+      },
     ],
   },
 };

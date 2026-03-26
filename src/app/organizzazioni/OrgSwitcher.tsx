@@ -12,7 +12,7 @@ export function OrgSwitcher({
     id: string;
     name: string;
     slug: string;
-    role: "owner" | "admin" | "member";
+    role: "owner" | "admin" | "runner";
   }>;
 }) {
   const router = useRouter();

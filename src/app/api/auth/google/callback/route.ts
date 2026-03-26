@@ -56,7 +56,9 @@ export async function GET(request: Request) {
       code_verifier: codeVerifier,
     }),
   });
-  const tokenJson = (await tokenRes.json().catch(() => null)) as any;
+  const tokenJson = (await tokenRes.json().catch(() => null)) as
+    | { id_token?: string }
+    | null;
   if (!tokenRes.ok || !tokenJson?.id_token) {
     return NextResponse.redirect(new URL("/login?error=oauth", url.origin));
   }

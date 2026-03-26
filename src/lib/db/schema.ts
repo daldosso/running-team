@@ -13,7 +13,7 @@ import {
 export const userRoleEnum = pgEnum("user_role", [
   "owner",
   "admin",
-  "member",
+  "runner",
 ]);
 
 // Stato pagamento
@@ -47,7 +47,7 @@ export const users = pgTable("users", {
   organizationId: uuid("organization_id")
     .notNull()
     .references(() => organizations.id, { onDelete: "cascade" }),
-  role: userRoleEnum("role").notNull().default("member"),
+  role: userRoleEnum("role").notNull().default("runner"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
@@ -67,7 +67,7 @@ export const organizationMembers = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    role: userRoleEnum("role").notNull().default("member"),
+    role: userRoleEnum("role").notNull().default("runner"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),

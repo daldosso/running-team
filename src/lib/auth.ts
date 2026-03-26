@@ -4,7 +4,7 @@ import { SignJWT, jwtVerify } from "jose";
 export type SessionPayload = {
   userId: string;
   orgId: string;
-  role: "owner" | "admin" | "member";
+  role: "owner" | "admin" | "runner";
 };
 
 const SESSION_COOKIE = "running-team-session";
@@ -55,7 +55,7 @@ export async function getSession(): Promise<SessionPayload | null> {
     if (
       typeof userId !== "string" ||
       typeof orgId !== "string" ||
-      (role !== "owner" && role !== "admin" && role !== "member")
+      (role !== "owner" && role !== "admin" && role !== "runner")
     ) {
       return null;
     }
