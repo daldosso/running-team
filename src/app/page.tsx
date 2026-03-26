@@ -1,12 +1,19 @@
+import { getSession } from "@/lib/auth";
 import { getOrganizationId } from "@/lib/org-context";
 import { db } from "@/lib/db";
 import { members, payments } from "@/lib/db/schema";
 import { and, eq, gte, sql } from "drizzle-orm";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
+  const session = await getSession();
+  if (session?.role === "runner") {
+    redirect("/gare");
+  }
+
   const orgId = await getOrganizationId();
 
   if (!orgId) {

@@ -15,16 +15,20 @@ const statusLabels: Record<string, string> = {
 export function PaymentsList({
   payments: list,
   members,
+  canManage = false,
 }: {
   payments: Payment[];
   members: MemberOption[];
+  canManage?: boolean;
 }) {
   const memberMap = new Map(members.map((m) => [m.id, `${m.firstName} ${m.lastName}`]));
 
   if (list.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-zinc-300 py-8 text-center text-zinc-500 dark:border-zinc-600">
-        Nessun pagamento. Aggiungi il primo con &quot;+ Nuovo pagamento&quot;.
+        {canManage
+          ? "Nessun pagamento. Aggiungi il primo con + Nuovo pagamento."
+          : "Non risultano pagamenti associati al tuo profilo."}
       </p>
     );
   }
@@ -76,37 +80,41 @@ export function PaymentsList({
                   : new Date(p.createdAt).toLocaleDateString("it-IT")}
               </td>
               <td className="px-4 py-3">
-                <div className="flex gap-2">
-                  {p.status === "pending" && (
+                {canManage ? (
+                  <div className="flex gap-2">
+                    {p.status === "pending" && (
+                      <form
+                        action={async () => {
+                          await updatePaymentStatus(p.id, "completed");
+                        }}
+                      >
+                        <button
+                          type="submit"
+                          className="text-green-600 hover:underline dark:text-green-400"
+                        >
+                          Segna pagato
+                        </button>
+                      </form>
+                    )}
                     <form
                       action={async () => {
-                        await updatePaymentStatus(p.id, "completed");
+                        await deletePayment(p.id);
+                      }}
+                      onSubmit={(e) => {
+                        if (!confirm("Eliminare questo pagamento?")) e.preventDefault();
                       }}
                     >
                       <button
                         type="submit"
-                        className="text-green-600 hover:underline dark:text-green-400"
+                        className="text-red-600 hover:underline dark:text-red-400"
                       >
-                        Segna pagato
+                        Elimina
                       </button>
                     </form>
-                  )}
-                  <form
-                    action={async () => {
-                      await deletePayment(p.id);
-                    }}
-                    onSubmit={(e) => {
-                      if (!confirm("Eliminare questo pagamento?")) e.preventDefault();
-                    }}
-                  >
-                    <button
-                      type="submit"
-                      className="text-red-600 hover:underline dark:text-red-400"
-                    >
-                      Elimina
-                    </button>
-                  </form>
-                </div>
+                  </div>
+                ) : (
+                  <span className="text-xs text-zinc-500">—</span>
+                )}
               </td>
             </tr>
           ))}

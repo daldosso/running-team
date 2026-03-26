@@ -40,6 +40,7 @@ export function Nav() {
   }, []);
 
   const isAdmin = role === "owner" || role === "admin";
+  const isRunner = role === "runner";
   const isRunFast = orgSlug === "run-fast";
   const brandName = orgName ?? (isRunFast ? "Run Fast" : "Running Team");
   const logoSrc = isRunFast
@@ -63,27 +64,29 @@ export function Nav() {
           {brandName}
         </Link>
         <div className="flex flex-1 items-center gap-2">
-          <Link
-            href="/"
-            className="rounded-full border border-transparent px-3 py-1 text-sm font-medium text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-white"
-          >
-            Dashboard
-          </Link>
           {isAdmin && (
-            <>
-              <Link
-                href="/iscritti"
-                className="rounded-full border border-transparent px-3 py-1 text-sm font-medium text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-white"
-              >
-                Iscritti
-              </Link>
-              <Link
-                href="/pagamenti"
-                className="rounded-full border border-transparent px-3 py-1 text-sm font-medium text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-white"
-              >
-                Pagamenti
-              </Link>
-            </>
+            <Link
+              href="/"
+              className="rounded-full border border-transparent px-3 py-1 text-sm font-medium text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-white"
+            >
+              Dashboard
+            </Link>
+          )}
+          {isAdmin && (
+            <Link
+              href="/iscritti"
+              className="rounded-full border border-transparent px-3 py-1 text-sm font-medium text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-white"
+            >
+              Iscritti
+            </Link>
+          )}
+          {(isAdmin || isRunner) && (
+            <Link
+              href="/pagamenti"
+              className="rounded-full border border-transparent px-3 py-1 text-sm font-medium text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-white"
+            >
+              {isRunner ? "I miei pagamenti" : "Pagamenti"}
+            </Link>
           )}
           <Link
             href="/gare"

@@ -1,6 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
+import { getSession } from "@/lib/auth";
 import { payments } from "@/lib/db/schema";
 import { getOrganizationId } from "@/lib/org-context";
 import { revalidatePath } from "next/cache";
@@ -15,6 +16,12 @@ export type PaymentFormData = {
 };
 
 export async function createPayment(formData: PaymentFormData) {
+  const session = await getSession();
+  const canManage = session?.role === "owner" || session?.role === "admin";
+  if (!session || !canManage) {
+    return { ok: false, error: "Non autorizzato" };
+  }
+
   const orgId = await getOrganizationId();
   if (!orgId) return { ok: false, error: "Organizzazione non specificata" };
 
@@ -36,6 +43,12 @@ export async function updatePaymentStatus(
   id: string,
   status: "pending" | "completed" | "failed" | "refunded"
 ) {
+  const session = await getSession();
+  const canManage = session?.role === "owner" || session?.role === "admin";
+  if (!session || !canManage) {
+    return { ok: false, error: "Non autorizzato" };
+  }
+
   const orgId = await getOrganizationId();
   if (!orgId) return { ok: false, error: "Organizzazione non specificata" };
 
@@ -53,6 +66,12 @@ export async function updatePaymentStatus(
 }
 
 export async function deletePayment(id: string) {
+  const session = await getSession();
+  const canManage = session?.role === "owner" || session?.role === "admin";
+  if (!session || !canManage) {
+    return { ok: false, error: "Non autorizzato" };
+  }
+
   const orgId = await getOrganizationId();
   if (!orgId) return { ok: false, error: "Organizzazione non specificata" };
 
