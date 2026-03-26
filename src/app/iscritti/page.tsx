@@ -27,7 +27,9 @@ export default async function IscrittiPage() {
     <div>
       <h1 className="mb-6 text-2xl font-bold tracking-tight">Iscritti</h1>
       <MemberForm className="mb-8" />
-      <MembersList members={list} />
+      <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8">
+        <MembersList members={list} />
+      </div>
     </div>
   );
 }

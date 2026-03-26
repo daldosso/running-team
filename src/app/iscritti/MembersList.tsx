@@ -1,11 +1,69 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import type { Member } from "@/lib/db/schema";
 import { deleteMember, updateMember } from "@/app/actions/members";
 
+const DEFAULT_COLUMN_WIDTHS = [
+  200, // Nome
+  110, // Tessera
+  190, // Codice Fiscale
+  80, // Cat.
+  140, // Status
+  170, // Materiale 2026
+  130, // Spedizione
+  90, // Genere
+  220, // Email
+  130, // Telefono
+  80, // Azioni
+];
+
 export function MembersList({ members: list }: { members: Member[] }) {
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [colWidths, setColWidths] = useState<number[]>(DEFAULT_COLUMN_WIDTHS);
+  const resizeRef = useRef<{
+    index: number;
+    startX: number;
+    startWidth: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const handleMove = (event: MouseEvent) => {
+      if (!resizeRef.current) return;
+      const { index, startX, startWidth } = resizeRef.current;
+      const delta = event.clientX - startX;
+      const nextWidth = Math.max(80, startWidth + delta);
+      setColWidths((prev) => {
+        if (prev[index] === nextWidth) return prev;
+        const next = [...prev];
+        next[index] = nextWidth;
+        return next;
+      });
+    };
+
+    const handleUp = () => {
+      resizeRef.current = null;
+      document.body.classList.remove("select-none");
+    };
+
+    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("mouseup", handleUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseup", handleUp);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!editingId) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setEditingId(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [editingId]);
 
   if (list.length === 0) {
     return (
@@ -18,20 +76,47 @@ export function MembersList({ members: list }: { members: Member[] }) {
   return (
     <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
       <div className="overflow-x-auto">
-        <table className="min-w-[2600px] w-full text-left text-sm whitespace-nowrap">
+        <table className="min-w-[1800px] w-full table-fixed text-left text-sm whitespace-nowrap">
         <thead>
           <tr className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50">
-            <th className="px-4 py-3 font-medium min-w-[220px]">Nome</th>
-            <th className="px-4 py-3 font-medium min-w-[120px]">Tessera</th>
-            <th className="px-4 py-3 font-medium min-w-[220px]">Codice Fiscale</th>
-            <th className="px-4 py-3 font-medium">Cat.</th>
-            <th className="px-4 py-3 font-medium min-w-[180px]">Status</th>
-            <th className="px-4 py-3 font-medium min-w-[220px]">Materiale 2026</th>
-            <th className="px-4 py-3 font-medium">Spedizione</th>
-            <th className="px-4 py-3 font-medium">Genere</th>
-            <th className="px-4 py-3 font-medium min-w-[260px]">Email</th>
-            <th className="px-4 py-3 font-medium min-w-[160px]">Telefono</th>
-            <th className="w-20 px-4 py-3" />
+            {[
+              "Nome",
+              "Tessera",
+              "Codice Fiscale",
+              "Cat.",
+              "Status",
+              "Materiale 2026",
+              "Spedizione",
+              "Genere",
+              "Email",
+              "Telefono",
+              "",
+            ].map((label, index) => (
+              <th
+                key={label || "azioni"}
+                style={{ width: colWidths[index] }}
+                className={`group relative px-4 py-3 font-medium${
+                  label ? "" : " sticky right-0 z-10 bg-zinc-50 dark:bg-zinc-800/50"
+                }`}
+              >
+                <span>{label}</span>
+                {label ? (
+                  <button
+                    type="button"
+                    onMouseDown={(event) => {
+                      resizeRef.current = {
+                        index,
+                        startX: event.clientX,
+                        startWidth: colWidths[index],
+                      };
+                      document.body.classList.add("select-none");
+                    }}
+                    className="absolute right-0 top-0 h-full w-2 cursor-col-resize"
+                    aria-label={`Ridimensiona colonna ${label}`}
+                  />
+                ) : null}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -43,45 +128,88 @@ export function MembersList({ members: list }: { members: Member[] }) {
                 <tr
                   className="border-b border-zinc-100 last:border-0 dark:border-zinc-800"
                 >
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3" style={{ width: colWidths[0] }}>
                     {m.firstName} {m.lastName}
                   </td>
-                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                  <td
+                    className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
+                    style={{ width: colWidths[1] }}
+                  >
                     {m.tessera ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                  <td
+                    className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
+                    style={{ width: colWidths[2] }}
+                  >
                     {m.codiceFiscale ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                  <td
+                    className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
+                    style={{ width: colWidths[3] }}
+                  >
                     {m.categoria ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                  <td
+                    className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
+                    style={{ width: colWidths[4] }}
+                  >
                     {m.status ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                  <td
+                    className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
+                    style={{ width: colWidths[5] }}
+                  >
                     {m.materiale2026Consegna ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                  <td
+                    className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
+                    style={{ width: colWidths[6] }}
+                  >
                     {m.spedizione ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                  <td
+                    className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
+                    style={{ width: colWidths[7] }}
+                  >
                     {m.genere ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                  <td
+                    className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
+                    style={{ width: colWidths[8] }}
+                  >
                     {m.email}
                   </td>
-                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                  <td
+                    className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
+                    style={{ width: colWidths[9] }}
+                  >
                     {m.phone ?? "—"}
                   </td>
-                  <td className="px-4 py-3">
+                  <td
+                    className="sticky right-0 z-10 bg-white px-4 py-3 dark:bg-zinc-900"
+                    style={{ width: colWidths[10] }}
+                  >
                     {!isEditing ? (
                       <div className="flex items-center justify-end gap-3">
                         <button
                           type="button"
                           onClick={() => setEditingId(m.id)}
-                          className="text-zinc-700 hover:underline dark:text-zinc-200"
+                          className="rounded-md p-1 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800 dark:hover:text-white"
+                          aria-label="Modifica iscritto"
+                          title="Modifica"
                         >
-                          Modifica
+                          <svg
+                            viewBox="0 0 24 24"
+                            className="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                          </svg>
                         </button>
                         <form
                           action={async () => {
@@ -93,9 +221,25 @@ export function MembersList({ members: list }: { members: Member[] }) {
                         >
                           <button
                             type="submit"
-                            className="text-red-600 hover:underline dark:text-red-400"
+                            className="rounded-md p-1 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/30 dark:hover:text-red-300"
+                            aria-label="Elimina iscritto"
+                            title="Elimina"
                           >
-                            Elimina
+                            <svg
+                              viewBox="0 0 24 24"
+                              className="h-4 w-4"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.8"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M3 6h18" />
+                              <path d="M8 6V4h8v2" />
+                              <path d="M6 6l1 14h10l1-14" />
+                              <path d="M10 11v6" />
+                              <path d="M14 11v6" />
+                            </svg>
                           </button>
                         </form>
                       </div>
@@ -106,10 +250,18 @@ export function MembersList({ members: list }: { members: Member[] }) {
                 </tr>
                 {isEditing && (
                   <tr>
-                    <td colSpan={11} className="border-b border-zinc-100 p-4">
-                      <form
-                        action={async (fd) => {
-                          await updateMember(m.id, {
+                    <td colSpan={11} className="p-0">
+                      <div className="fixed inset-0 z-50">
+                        <button
+                          type="button"
+                          onClick={() => setEditingId(null)}
+                          className="absolute inset-0 bg-black/50"
+                          aria-label="Chiudi modifica iscritto"
+                        />
+                        <div className="absolute inset-x-0 top-6 mx-auto w-full max-w-5xl px-4 sm:px-6">
+                          <form
+                            action={async (fd) => {
+                              await updateMember(m.id, {
                             firstName: fd.get("firstName") as string,
                             lastName: fd.get("lastName") as string,
                             email: fd.get("email") as string,
@@ -144,12 +296,41 @@ export function MembersList({ members: list }: { members: Member[] }) {
                             tagliaFelpaPulsar:
                               (fd.get("tagliaFelpaPulsar") as string) || undefined,
                             notes: (fd.get("notes") as string) || undefined,
-                          });
-                          setEditingId(null);
-                        }}
-                        className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
-                      >
-                        <div className="grid gap-4 md:grid-cols-2">
+                              });
+                              setEditingId(null);
+                            }}
+                            className="relative mx-auto max-h-[80vh] w-full overflow-auto rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-900 sm:p-8"
+                          >
+                            <div className="mb-4 flex items-start justify-between">
+                              <div>
+                                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                                  Modifica iscritto
+                                </p>
+                                <p className="text-xs text-zinc-500">
+                                  {m.firstName} {m.lastName}
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setEditingId(null)}
+                                className="rounded-md p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                                aria-label="Chiudi"
+                              >
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  className="h-4 w-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="1.8"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M6 6l12 12" />
+                                  <path d="M18 6l-12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                        <div className="grid gap-5 md:grid-cols-2">
                           <div>
                             <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
                               Nome
@@ -173,7 +354,7 @@ export function MembersList({ members: list }: { members: Member[] }) {
                             />
                           </div>
                         </div>
-                        <div className="mt-4">
+                        <div className="mt-5">
                           <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
                             Email
                           </label>
@@ -185,7 +366,7 @@ export function MembersList({ members: list }: { members: Member[] }) {
                             className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
                           />
                         </div>
-                        <div className="mt-4 grid gap-4 md:grid-cols-2">
+                        <div className="mt-5 grid gap-5 md:grid-cols-2">
                           <div>
                             <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
                               Telefono
@@ -209,7 +390,7 @@ export function MembersList({ members: list }: { members: Member[] }) {
                             />
                           </div>
                         </div>
-                        <div className="mt-4 grid gap-4 md:grid-cols-2">
+                        <div className="mt-5 grid gap-5 md:grid-cols-2">
                           <div>
                             <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
                               Tessera
@@ -231,7 +412,7 @@ export function MembersList({ members: list }: { members: Member[] }) {
                             />
                           </div>
                         </div>
-                        <div className="mt-4 grid gap-4 md:grid-cols-2">
+                        <div className="mt-5 grid gap-5 md:grid-cols-2">
                           <div>
                             <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
                               Luogo nascita
@@ -253,7 +434,7 @@ export function MembersList({ members: list }: { members: Member[] }) {
                             />
                           </div>
                         </div>
-                        <div className="mt-4 grid gap-4 md:grid-cols-2">
+                        <div className="mt-5 grid gap-5 md:grid-cols-2">
                           <div>
                             <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
                               Straniero
@@ -275,7 +456,7 @@ export function MembersList({ members: list }: { members: Member[] }) {
                             />
                           </div>
                         </div>
-                        <div className="mt-4 grid gap-4 md:grid-cols-2">
+                        <div className="mt-5 grid gap-5 md:grid-cols-2">
                           <div>
                             <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
                               Status
@@ -297,7 +478,7 @@ export function MembersList({ members: list }: { members: Member[] }) {
                             />
                           </div>
                         </div>
-                        <div className="mt-4 grid gap-4 md:grid-cols-2">
+                        <div className="mt-5 grid gap-5 md:grid-cols-2">
                           <div>
                             <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
                               Spedizione
@@ -319,7 +500,7 @@ export function MembersList({ members: list }: { members: Member[] }) {
                             />
                           </div>
                         </div>
-                        <div className="mt-4 grid gap-4 md:grid-cols-3">
+                        <div className="mt-5 grid gap-5 md:grid-cols-3">
                           <div>
                             <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
                               CAP
@@ -352,11 +533,11 @@ export function MembersList({ members: list }: { members: Member[] }) {
                           </div>
                         </div>
 
-                        <div className="mt-6 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+                        <div className="mt-7 rounded-lg border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-zinc-900">
                           <p className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                             Taglie
                           </p>
-                          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
                             <div>
                               <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
                                 Maglia cotone
@@ -429,7 +610,7 @@ export function MembersList({ members: list }: { members: Member[] }) {
                             </div>
                           </div>
                         </div>
-                        <div className="mt-4">
+                        <div className="mt-5">
                           <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
                             Note
                           </label>
@@ -440,7 +621,7 @@ export function MembersList({ members: list }: { members: Member[] }) {
                             className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
                           />
                         </div>
-                        <div className="mt-4 flex gap-2">
+                        <div className="mt-5 flex gap-2">
                           <button
                             type="submit"
                             className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
@@ -456,6 +637,8 @@ export function MembersList({ members: list }: { members: Member[] }) {
                           </button>
                         </div>
                       </form>
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 )}
