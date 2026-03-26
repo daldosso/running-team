@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Nav } from "./components/Nav";
+import { ConditionalNav } from "./components/ConditionalNav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,7 +28,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen font-sans antialiased`}
       >
-        <Nav />
+        <ConditionalNav />
         <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
       </body>
     </html>
