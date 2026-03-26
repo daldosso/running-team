@@ -18,7 +18,7 @@ export function MembersList({ members: list }: { members: Member[] }) {
   return (
     <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
       <div className="overflow-x-auto">
-        <table className="min-w-[1100px] w-full text-left text-sm">
+        <table className="min-w-[1800px] w-full text-left text-sm whitespace-nowrap">
         <thead>
           <tr className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50">
             <th className="px-4 py-3 font-medium">Nome</th>
