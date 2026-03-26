@@ -29,6 +29,8 @@ export async function middleware(req: NextRequest) {
   // Public routes
   if (
     pathname.startsWith("/login") ||
+    pathname.startsWith("/forgot-password") ||
+    pathname.startsWith("/reset-password") ||
     pathname.startsWith("/organizzazioni") ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/seed") ||

@@ -56,6 +56,20 @@ export const users = pgTable("users", {
     .notNull(),
 });
 
+// Token di reset password (uso one-time).
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  tokenHash: text("token_hash").notNull().unique(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+});
+
 // Membership utente ↔ organizzazione (multi-tenant vero)
 export const organizationMembers = pgTable(
   "organization_members",
@@ -305,3 +319,6 @@ export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
 export type EventParticipant = typeof eventParticipants.$inferSelect;
 export type NewEventParticipant = typeof eventParticipants.$inferInsert;
+
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+export type NewPasswordResetToken = typeof passwordResetTokens.$inferInsert;

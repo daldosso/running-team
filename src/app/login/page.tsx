@@ -116,6 +116,15 @@ function LoginInner() {
             {loading ? "Accesso..." : "Accedi"}
           </button>
         </form>
+
+        <div className="mt-4 text-center text-sm">
+          <a
+            href="/forgot-password"
+            className="font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+          >
+            Password dimenticata?
+          </a>
+        </div>
       </div>
     </div>
   );

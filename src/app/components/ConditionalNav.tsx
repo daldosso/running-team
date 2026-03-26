@@ -7,7 +7,13 @@ export function ConditionalNav() {
   const pathname = usePathname();
 
   if (!pathname) return null;
-  if (pathname?.startsWith("/login")) return null;
+  if (
+    pathname?.startsWith("/login") ||
+    pathname?.startsWith("/forgot-password") ||
+    pathname?.startsWith("/reset-password")
+  ) {
+    return null;
+  }
 
   return <Nav />;
 }
