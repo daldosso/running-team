@@ -200,7 +200,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Member photo removal failed", {
-      memberId: payload.memberId,
+      memberId,
       orgId,
       name: (error as Error)?.name,
       message: (error as Error)?.message,
