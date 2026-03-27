@@ -60,7 +60,13 @@ export default async function UtenzePage() {
                 </tr>
               </thead>
               <tbody>
-                {list.map((u) => (
+                {list.map((u) => {
+                  const linkAction = async (fd: FormData) => {
+                    "use server";
+                    const memberId = (fd.get("memberId") as string) || null;
+                    await linkUserToMember(u.id, memberId);
+                  };
+                  return (
                   <tr
                     key={u.id}
                     className="border-b border-zinc-100 last:border-0 dark:border-zinc-800"
@@ -75,13 +81,7 @@ export default async function UtenzePage() {
                       {u.role}
                     </td>
                     <td className="px-4 py-3">
-                      <form
-                        action={async (fd) => {
-                          const memberId = (fd.get("memberId") as string) || null;
-                          await linkUserToMember(u.id, memberId);
-                        }}
-                        className="flex items-center gap-2"
-                      >
+                      <form action={linkAction} className="flex items-center gap-2">
                         <select
                           name="memberId"
                           defaultValue={u.memberId ?? ""}
@@ -108,7 +108,8 @@ export default async function UtenzePage() {
                         : "—"}
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
