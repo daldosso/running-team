@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { Member } from "@/lib/db/schema";
 import { deleteMember, updateMember } from "@/app/actions/members";
 
@@ -20,6 +21,7 @@ const DEFAULT_COLUMN_WIDTHS = [
 ];
 
 export function MembersList({ members: list }: { members: Member[] }) {
+  const router = useRouter();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"profilo" | "dettagli">("profilo");
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -95,6 +97,7 @@ export function MembersList({ members: list }: { members: Member[] }) {
         return;
       }
       setPhotoPreview(data.url ?? null);
+      router.refresh();
     } catch {
       setPhotoError("Upload fallito");
     } finally {
@@ -117,6 +120,7 @@ export function MembersList({ members: list }: { members: Member[] }) {
         return;
       }
       setPhotoPreview(null);
+      router.refresh();
     } catch {
       setPhotoError("Operazione non riuscita");
     } finally {
