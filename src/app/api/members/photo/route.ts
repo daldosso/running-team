@@ -61,21 +61,34 @@ export async function POST(request: Request) {
   const ext = file.name?.match(/\.[a-z0-9]+$/i)?.[0] || ".jpg";
   const pathname = `${orgId}/members/${memberId}-${Date.now()}${ext}`;
 
-  const blob = await put(pathname, file, {
-    access: "public",
-    addRandomSuffix: true,
-    contentType: type,
-  });
+  try {
+    const blob = await put(pathname, file, {
+      access: "public",
+      addRandomSuffix: true,
+      contentType: type,
+    });
 
-  await db
-    .update(members)
-    .set({
-      photoUrl: blob.url,
-      updatedAt: new Date(),
-    })
-    .where(and(eq(members.id, memberId), eq(members.organizationId, orgId)));
+    await db
+      .update(members)
+      .set({
+        photoUrl: blob.url,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(members.id, memberId), eq(members.organizationId, orgId)));
 
-  return NextResponse.json({ ok: true, url: blob.url });
+    return NextResponse.json({ ok: true, url: blob.url });
+  } catch (error) {
+    console.error("Member photo upload failed", {
+      memberId,
+      orgId,
+      name: (error as Error)?.name,
+      message: (error as Error)?.message,
+    });
+    return NextResponse.json(
+      { error: "Upload fallito", details: (error as Error)?.message },
+      { status: 500 }
+    );
+  }
 }
 
 export async function DELETE(request: Request) {
@@ -98,13 +111,26 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Member ID mancante" }, { status: 400 });
   }
 
-  await db
-    .update(members)
-    .set({
-      photoUrl: null,
-      updatedAt: new Date(),
-    })
-    .where(and(eq(members.id, payload.memberId), eq(members.organizationId, orgId)));
+  try {
+    await db
+      .update(members)
+      .set({
+        photoUrl: null,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(members.id, payload.memberId), eq(members.organizationId, orgId)));
 
-  return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("Member photo removal failed", {
+      memberId: payload.memberId,
+      orgId,
+      name: (error as Error)?.name,
+      message: (error as Error)?.message,
+    });
+    return NextResponse.json(
+      { error: "Operazione non riuscita", details: (error as Error)?.message },
+      { status: 500 }
+    );
+  }
 }
