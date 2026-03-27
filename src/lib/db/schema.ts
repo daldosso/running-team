@@ -120,6 +120,7 @@ export const members = pgTable(
     materiale2026Consegna: text("materiale_2026_consegnato"),
     spedizione: text("spedizione"),
     genere: text("genere"),
+    photoUrl: text("photo_url"),
     // Taglie
     tagliaMagliaCotone: text("taglia_maglia_cotone"),
     tagliaMagliaSolar: text("taglia_maglia_solar"),
