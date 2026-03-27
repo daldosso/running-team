@@ -223,9 +223,9 @@ export function MembersList({ members: list }: { members: Member[] }) {
                       aria-label={`Modifica ${m.firstName} ${m.lastName}`}
                       title="Modifica iscritto"
                     >
-                      {m.photoUrl ? (
+                      {currentPhoto ? (
                         <img
-                          src={m.photoUrl}
+                          src={currentPhoto}
                           alt={`${m.firstName} ${m.lastName}`}
                           className="h-full w-full object-cover"
                         />
