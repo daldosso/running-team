@@ -38,16 +38,12 @@ export async function GET(
     : member.photoUrl;
 
   try {
-    const blob = await get(pathname, { access: "private" });
-    if (!blob) {
+    const result = await get(pathname, { access: "private" });
+    if (!result) {
       return NextResponse.json({ error: "Foto non trovata" }, { status: 404 });
     }
-    const headers = new Headers();
-    if (blob.contentType) headers.set("content-type", blob.contentType);
-    if (blob.contentDisposition)
-      headers.set("content-disposition", blob.contentDisposition);
-    if (blob.cacheControl) headers.set("cache-control", blob.cacheControl);
-    return new NextResponse(blob.body, { status: 200, headers });
+    const headers = new Headers(result.headers);
+    return new NextResponse(result.stream, { status: 200, headers });
   } catch (error) {
     console.error("Member photo fetch failed", {
       memberId,
