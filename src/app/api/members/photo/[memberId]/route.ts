@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { get } from "@vercel/blob";
 import { db } from "@/lib/db";
@@ -8,8 +8,8 @@ import { getOrganizationId } from "@/lib/org-context";
 export const dynamic = "force-dynamic";
 
 export async function GET(
-  _request: Request,
-  { params }: { params: { memberId: string } }
+  _request: NextRequest,
+  { params }: { params: Promise<{ memberId: string }> }
 ) {
   const orgId = await getOrganizationId();
   if (!orgId) {
@@ -19,7 +19,7 @@ export async function GET(
     );
   }
 
-  const memberId = params.memberId;
+  const { memberId } = await params;
   if (!memberId) {
     return NextResponse.json({ error: "Member ID mancante" }, { status: 400 });
   }
