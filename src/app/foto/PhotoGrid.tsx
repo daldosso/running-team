@@ -3,7 +3,7 @@
 import type { Photo } from "@/lib/db/schema";
 import Image from "next/image";
 import { deletePhoto } from "@/app/actions/photos";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type RaceOption = { id: string; name: string; raceDate: string };
 
@@ -15,10 +15,25 @@ export function PhotoGrid({
   races: RaceOption[];
 }) {
   const [filterRaceId, setFilterRaceId] = useState<string>("");
+  const [activePhoto, setActivePhoto] = useState<Photo | null>(null);
   const filtered =
     filterRaceId === ""
       ? list
       : list.filter((p) => p.raceId === filterRaceId);
+
+  useEffect(() => {
+    if (!activePhoto) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setActivePhoto(null);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [activePhoto]);
 
   if (list.length === 0) {
     return (
@@ -57,7 +72,16 @@ export function PhotoGrid({
           return (
           <div
             key={p.id}
-            className="group relative aspect-square overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800"
+            role="button"
+            tabIndex={0}
+            onClick={() => setActivePhoto(p)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setActivePhoto(p);
+              }
+            }}
+            className="group relative aspect-square cursor-zoom-in overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-black/60 dark:border-zinc-700 dark:bg-zinc-800 dark:focus-visible:ring-white/60"
           >
             <Image
               src={src}
@@ -84,6 +108,7 @@ export function PhotoGrid({
                 onSubmit={(e) => {
                   if (!confirm("Eliminare questa foto?")) e.preventDefault();
                 }}
+                onClick={(e) => e.stopPropagation()}
                 className="mt-1"
               >
                 <button
@@ -98,6 +123,59 @@ export function PhotoGrid({
         );
         })}
       </div>
+
+      {activePhoto && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setActivePhoto(null)}
+        >
+          <div
+            className="relative max-h-[90vh] w-full max-w-5xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setActivePhoto(null)}
+              className="absolute right-0 top-0 z-10 rounded-full bg-black/70 px-3 py-1.5 text-xs text-white hover:bg-black"
+              aria-label="Chiudi"
+            >
+              Chiudi
+            </button>
+            {(() => {
+              const isExternal = activePhoto.url.startsWith("http");
+              const src = isExternal
+                ? activePhoto.url
+                : `/api/photos/${activePhoto.id}`;
+              return (
+                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-black">
+                  <Image
+                    src={src}
+                    alt={activePhoto.caption || activePhoto.filename}
+                    fill
+                    sizes="(max-width: 1024px) 90vw, 1024px"
+                    className="object-contain"
+                    unoptimized={isExternal || src.includes("/api/photos/")}
+                  />
+                </div>
+              );
+            })()}
+            {(activePhoto.caption || activePhoto.raceId) && (
+              <div className="mt-3 text-sm text-white">
+                {activePhoto.caption && (
+                  <p className="truncate">{activePhoto.caption}</p>
+                )}
+                {activePhoto.raceId && (
+                  <p className="text-white/70">
+                    {raceMap.get(activePhoto.raceId) ?? "Gara"}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
