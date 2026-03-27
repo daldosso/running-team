@@ -43,6 +43,9 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash"),
   name: text("name"),
+  memberId: uuid("member_id").references(() => members.id, {
+    onDelete: "set null",
+  }),
   // org di default/attiva iniziale (per compatibilità e onboarding semplice)
   organizationId: uuid("organization_id")
     .notNull()

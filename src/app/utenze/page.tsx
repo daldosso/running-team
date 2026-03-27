@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import { members, users } from "@/lib/db/schema";
 import { getOrganizationId } from "@/lib/org-context";
 import { asc, eq } from "drizzle-orm";
+import { linkUserToMember } from "@/app/actions/users";
 
 export const dynamic = "force-dynamic";
 
@@ -22,14 +23,25 @@ export default async function UtenzePage() {
       email: users.email,
       role: users.role,
       createdAt: users.createdAt,
+      memberId: users.memberId,
     })
     .from(users)
     .where(eq(users.organizationId, orgId))
     .orderBy(asc(users.email));
 
+  const membersList = await db
+    .select({
+      id: members.id,
+      firstName: members.firstName,
+      lastName: members.lastName,
+    })
+    .from(members)
+    .where(eq(members.organizationId, orgId))
+    .orderBy(asc(members.lastName));
+
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold tracking-tight">Utenze</h1>
+      <h1 className="mb-6 text-2xl font-bold tracking-tight">Users</h1>
       {list.length === 0 ? (
         <p className="rounded-xl border border-dashed border-zinc-300 py-8 text-center text-zinc-500 dark:border-zinc-600">
           Nessuna utenza trovata.
@@ -37,10 +49,10 @@ export default async function UtenzePage() {
       ) : (
         <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <div className="overflow-x-auto">
-            <table className="min-w-[720px] w-full table-fixed text-left text-sm whitespace-nowrap">
+            <table className="min-w-[860px] w-full table-fixed text-left text-sm whitespace-nowrap">
               <thead>
                 <tr className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50">
-                  {["Nome", "Email", "Ruolo", "Creata"].map((label) => (
+                  {["Nome", "Email", "Ruolo", "Iscritto", "Creata"].map((label) => (
                     <th key={label} className="px-4 py-3 font-medium">
                       {label}
                     </th>
@@ -61,6 +73,28 @@ export default async function UtenzePage() {
                     </td>
                     <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
                       {u.role}
+                    </td>
+                    <td className="px-4 py-3">
+                      <form
+                        action={async (fd) => {
+                          const memberId = (fd.get("memberId") as string) || null;
+                          await linkUserToMember(u.id, memberId);
+                        }}
+                      >
+                        <select
+                          name="memberId"
+                          defaultValue={u.memberId ?? ""}
+                          onChange={(e) => e.currentTarget.form?.requestSubmit()}
+                          className="w-full rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                        >
+                          <option value="">—</option>
+                          {membersList.map((m) => (
+                            <option key={m.id} value={m.id}>
+                              {m.firstName} {m.lastName}
+                            </option>
+                          ))}
+                        </select>
+                      </form>
                     </td>
                     <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
                       {u.createdAt
