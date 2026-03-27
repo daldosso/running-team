@@ -5,6 +5,7 @@ import type { Member } from "@/lib/db/schema";
 import { deleteMember, updateMember } from "@/app/actions/members";
 
 const DEFAULT_COLUMN_WIDTHS = [
+  64, // Avatar
   200, // Nome
   110, // Tessera
   190, // Codice Fiscale
@@ -138,6 +139,7 @@ export function MembersList({ members: list }: { members: Member[] }) {
         <thead>
           <tr className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50">
             {[
+              "",
               "Nome",
               "Tessera",
               "Codice Fiscale",
@@ -188,65 +190,80 @@ export function MembersList({ members: list }: { members: Member[] }) {
                   className="border-b border-zinc-100 last:border-0 dark:border-zinc-800"
                 >
                   <td className="px-4 py-3" style={{ width: colWidths[0] }}>
-                    {m.firstName} {m.lastName}
+                    <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-zinc-200 bg-zinc-100 text-[10px] font-semibold text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                      {m.photoUrl ? (
+                        <img
+                          src={m.photoUrl}
+                          alt={`${m.firstName} ${m.lastName}`}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span>
+                          {`${m.firstName?.[0] ?? ""}${m.lastName?.[0] ?? ""}`.toUpperCase()}
+                        </span>
+                      )}
+                    </div>
                   </td>
-                  <td
-                    className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
-                    style={{ width: colWidths[1] }}
-                  >
-                    {m.tessera ?? "—"}
+                  <td className="px-4 py-3" style={{ width: colWidths[1] }}>
+                    {m.firstName} {m.lastName}
                   </td>
                   <td
                     className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
                     style={{ width: colWidths[2] }}
                   >
-                    {m.codiceFiscale ?? "—"}
+                    {m.tessera ?? "—"}
                   </td>
                   <td
                     className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
                     style={{ width: colWidths[3] }}
                   >
-                    {m.categoria ?? "—"}
+                    {m.codiceFiscale ?? "—"}
                   </td>
                   <td
                     className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
                     style={{ width: colWidths[4] }}
                   >
-                    {m.status ?? "—"}
+                    {m.categoria ?? "—"}
                   </td>
                   <td
                     className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
                     style={{ width: colWidths[5] }}
                   >
-                    {m.materiale2026Consegna ?? "—"}
+                    {m.status ?? "—"}
                   </td>
                   <td
                     className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
                     style={{ width: colWidths[6] }}
                   >
-                    {m.spedizione ?? "—"}
+                    {m.materiale2026Consegna ?? "—"}
                   </td>
                   <td
                     className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
                     style={{ width: colWidths[7] }}
                   >
-                    {m.genere ?? "—"}
+                    {m.spedizione ?? "—"}
                   </td>
                   <td
                     className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
                     style={{ width: colWidths[8] }}
                   >
-                    {m.email}
+                    {m.genere ?? "—"}
                   </td>
                   <td
                     className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
                     style={{ width: colWidths[9] }}
                   >
+                    {m.email}
+                  </td>
+                  <td
+                    className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
+                    style={{ width: colWidths[10] }}
+                  >
                     {m.phone ?? "—"}
                   </td>
                   <td
                     className="sticky right-0 z-10 bg-white px-4 py-3 dark:bg-zinc-900"
-                    style={{ width: colWidths[10] }}
+                    style={{ width: colWidths[11] }}
                   >
                     {!isEditing ? (
                       <div className="flex items-center justify-end gap-3">
