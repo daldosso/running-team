@@ -5,6 +5,21 @@ import { useRouter } from "next/navigation";
 import type { Member } from "@/lib/db/schema";
 import { deleteMember, updateMember } from "@/app/actions/members";
 
+const COLUMN_LABELS = [
+  "",
+  "Nome",
+  "Tessera",
+  "Codice Fiscale",
+  "Cat.",
+  "Status",
+  "Materiale 2026",
+  "Spedizione",
+  "Genere",
+  "Email",
+  "Telefono",
+  "",
+];
+
 const DEFAULT_COLUMN_WIDTHS = [
   64, // Avatar
   200, // Nome
@@ -28,11 +43,16 @@ export function MembersList({ members: list }: { members: Member[] }) {
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [colWidths, setColWidths] = useState<number[]>(DEFAULT_COLUMN_WIDTHS);
+  const [columnOrder, setColumnOrder] = useState<number[]>(
+    () => COLUMN_LABELS.map((_, index) => index)
+  );
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const resizeRef = useRef<{
     index: number;
     startX: number;
     startWidth: number;
   } | null>(null);
+  const dragRef = useRef<number | null>(null);
 
   useEffect(() => {
     const handleMove = (event: MouseEvent) => {
@@ -149,6 +169,9 @@ export function MembersList({ members: list }: { members: Member[] }) {
     }
   };
 
+  const isDraggableColumn = (index: number) => index !== 0 && index !== 11;
+  const isDroppableColumn = (index: number) => index !== 0 && index !== 11;
+
   if (list.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-zinc-300 py-8 text-center text-zinc-500 dark:border-zinc-600">
@@ -163,45 +186,79 @@ export function MembersList({ members: list }: { members: Member[] }) {
         <table className="min-w-[1800px] w-full table-fixed text-left text-sm whitespace-nowrap">
         <thead>
           <tr className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50">
-            {[
-              "",
-              "Nome",
-              "Tessera",
-              "Codice Fiscale",
-              "Cat.",
-              "Status",
-              "Materiale 2026",
-              "Spedizione",
-              "Genere",
-              "Email",
-              "Telefono",
-              "",
-            ].map((label, index) => (
-              <th
-                key={label || "azioni"}
-                style={{ width: colWidths[index] }}
-                className={`group relative px-4 py-3 font-medium${
-                  label ? "" : " sticky right-0 z-10 bg-zinc-50 dark:bg-zinc-800/50"
-                }`}
-              >
-                <span>{label}</span>
-                {label ? (
-                  <button
-                    type="button"
-                    onMouseDown={(event) => {
-                      resizeRef.current = {
-                        index,
-                        startX: event.clientX,
-                        startWidth: colWidths[index],
-                      };
-                      document.body.classList.add("select-none");
-                    }}
-                    className="absolute right-0 top-0 h-full w-2 cursor-col-resize"
-                    aria-label={`Ridimensiona colonna ${label}`}
-                  />
-                ) : null}
-              </th>
-            ))}
+            {columnOrder.map((colIndex) => {
+              const label = COLUMN_LABELS[colIndex];
+              const isSticky = colIndex === 11;
+              const isDraggable = isDraggableColumn(colIndex);
+              const isDroppable = isDroppableColumn(colIndex);
+              const isDragOver = dragOverIndex === colIndex && isDroppable;
+              return (
+                <th
+                  key={`col-${colIndex}`}
+                  style={{ width: colWidths[colIndex] }}
+                  draggable={isDraggable}
+                  onDragStart={(event) => {
+                    if (!isDraggable) return;
+                    dragRef.current = colIndex;
+                    setDragOverIndex(null);
+                    event.dataTransfer.effectAllowed = "move";
+                    event.dataTransfer.setData("text/plain", String(colIndex));
+                  }}
+                  onDragOver={(event) => {
+                    if (!isDroppable) return;
+                    if (dragRef.current === null || dragRef.current === colIndex) return;
+                    event.preventDefault();
+                    setDragOverIndex(colIndex);
+                  }}
+                  onDragLeave={() => {
+                    if (dragOverIndex === colIndex) setDragOverIndex(null);
+                  }}
+                  onDrop={(event) => {
+                    if (!isDroppable) return;
+                    event.preventDefault();
+                    const from = dragRef.current;
+                    if (from === null || from === colIndex) return;
+                    setColumnOrder((prev) => {
+                      if (!prev.includes(from)) return prev;
+                      const next = prev.filter((i) => i !== from);
+                      const targetPos = next.indexOf(colIndex);
+                      if (targetPos === -1) return prev;
+                      next.splice(targetPos, 0, from);
+                      return next;
+                    });
+                    dragRef.current = null;
+                    setDragOverIndex(null);
+                  }}
+                  onDragEnd={() => {
+                    dragRef.current = null;
+                    setDragOverIndex(null);
+                  }}
+                  className={`group relative px-4 py-3 font-medium${
+                    isSticky ? " sticky right-0 z-10 bg-zinc-50 dark:bg-zinc-800/50" : ""
+                  }${isDraggable ? " cursor-grab" : ""}${
+                    isDragOver ? " ring-2 ring-inset ring-zinc-400/60" : ""
+                  }`}
+                >
+                  <span className="select-none">{label}</span>
+                  {label ? (
+                    <button
+                      type="button"
+                      draggable={false}
+                      onMouseDown={(event) => {
+                        resizeRef.current = {
+                          index: colIndex,
+                          startX: event.clientX,
+                          startWidth: colWidths[colIndex],
+                        };
+                        document.body.classList.add("select-none");
+                      }}
+                      className="absolute right-0 top-0 h-full w-2 cursor-col-resize"
+                      aria-label={`Ridimensiona colonna ${label}`}
+                    />
+                  ) : null}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>
@@ -210,151 +267,167 @@ export function MembersList({ members: list }: { members: Member[] }) {
             const serverPhoto = m.photoUrl ? `/api/members/photo/${m.id}` : null;
             const currentPhoto = isEditing ? photoPreview ?? serverPhoto : serverPhoto;
 
+            const cells = [
+              <td key={`avatar-${m.id}`} className="px-4 py-3" style={{ width: colWidths[0] }}>
+                <button
+                  type="button"
+                  onClick={() => setEditingId(m.id)}
+                  className={`flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-zinc-200 bg-zinc-100 text-[10px] font-semibold text-zinc-500 transition hover:scale-[1.02] hover:shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 ${statusRingClass(
+                    m.status
+                  )}`}
+                  aria-label={`Modifica ${m.firstName} ${m.lastName}`}
+                  title="Modifica iscritto"
+                >
+                  {currentPhoto ? (
+                    <img
+                      src={currentPhoto}
+                      alt={`${m.firstName} ${m.lastName}`}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span>
+                      {`${m.firstName?.[0] ?? ""}${m.lastName?.[0] ?? ""}`.toUpperCase()}
+                    </span>
+                  )}
+                </button>
+              </td>,
+              <td key={`nome-${m.id}`} className="px-4 py-3" style={{ width: colWidths[1] }}>
+                {m.firstName} {m.lastName}
+              </td>,
+              <td
+                key={`tessera-${m.id}`}
+                className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
+                style={{ width: colWidths[2] }}
+              >
+                {m.tessera ?? "—"}
+              </td>,
+              <td
+                key={`cf-${m.id}`}
+                className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
+                style={{ width: colWidths[3] }}
+              >
+                {m.codiceFiscale ?? "—"}
+              </td>,
+              <td
+                key={`cat-${m.id}`}
+                className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
+                style={{ width: colWidths[4] }}
+              >
+                {m.categoria ?? "—"}
+              </td>,
+              <td
+                key={`status-${m.id}`}
+                className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
+                style={{ width: colWidths[5] }}
+              >
+                {m.status ?? "—"}
+              </td>,
+              <td
+                key={`materiale-${m.id}`}
+                className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
+                style={{ width: colWidths[6] }}
+              >
+                {m.materiale2026Consegna ?? "—"}
+              </td>,
+              <td
+                key={`spedizione-${m.id}`}
+                className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
+                style={{ width: colWidths[7] }}
+              >
+                {m.spedizione ?? "—"}
+              </td>,
+              <td
+                key={`genere-${m.id}`}
+                className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
+                style={{ width: colWidths[8] }}
+              >
+                {m.genere ?? "—"}
+              </td>,
+              <td
+                key={`email-${m.id}`}
+                className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
+                style={{ width: colWidths[9] }}
+              >
+                {m.email}
+              </td>,
+              <td
+                key={`telefono-${m.id}`}
+                className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
+                style={{ width: colWidths[10] }}
+              >
+                {m.phone ?? "—"}
+              </td>,
+              <td
+                key={`azioni-${m.id}`}
+                className="sticky right-0 z-10 bg-white px-4 py-3 dark:bg-zinc-900"
+                style={{ width: colWidths[11] }}
+              >
+                {!isEditing ? (
+                  <div className="flex items-center justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setEditingId(m.id)}
+                      className="rounded-md p-1 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800 dark:hover:text-white"
+                      aria-label="Modifica iscritto"
+                      title="Modifica"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                      </svg>
+                    </button>
+                    <form
+                      action={async () => {
+                        await deleteMember(m.id);
+                      }}
+                      onSubmit={(e) => {
+                        if (!confirm("Eliminare questo iscritto?")) e.preventDefault();
+                      }}
+                    >
+                      <button
+                        type="submit"
+                        className="rounded-md p-1 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/30 dark:hover:text-red-300"
+                        aria-label="Elimina iscritto"
+                        title="Elimina"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="h-4 w-4"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M3 6h18" />
+                          <path d="M8 6V4h8v2" />
+                          <path d="M6 6l1 14h10l1-14" />
+                          <path d="M10 11v6" />
+                          <path d="M14 11v6" />
+                        </svg>
+                      </button>
+                    </form>
+                  </div>
+                ) : (
+                  <span className="text-xs text-zinc-500">In modifica</span>
+                )}
+              </td>,
+            ];
+
             return (
               <Fragment key={m.id}>
                 <tr
                   className="border-b border-zinc-100 last:border-0 dark:border-zinc-800"
                 >
-                  <td className="px-4 py-3" style={{ width: colWidths[0] }}>
-                    <button
-                      type="button"
-                      onClick={() => setEditingId(m.id)}
-                      className={`flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-zinc-200 bg-zinc-100 text-[10px] font-semibold text-zinc-500 transition hover:scale-[1.02] hover:shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 ${statusRingClass(m.status)}`}
-                      aria-label={`Modifica ${m.firstName} ${m.lastName}`}
-                      title="Modifica iscritto"
-                    >
-                      {currentPhoto ? (
-                        <img
-                          src={currentPhoto}
-                          alt={`${m.firstName} ${m.lastName}`}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <span>
-                          {`${m.firstName?.[0] ?? ""}${m.lastName?.[0] ?? ""}`.toUpperCase()}
-                        </span>
-                      )}
-                    </button>
-                  </td>
-                  <td className="px-4 py-3" style={{ width: colWidths[1] }}>
-                    {m.firstName} {m.lastName}
-                  </td>
-                  <td
-                    className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
-                    style={{ width: colWidths[2] }}
-                  >
-                    {m.tessera ?? "—"}
-                  </td>
-                  <td
-                    className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
-                    style={{ width: colWidths[3] }}
-                  >
-                    {m.codiceFiscale ?? "—"}
-                  </td>
-                  <td
-                    className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
-                    style={{ width: colWidths[4] }}
-                  >
-                    {m.categoria ?? "—"}
-                  </td>
-                  <td
-                    className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
-                    style={{ width: colWidths[5] }}
-                  >
-                    {m.status ?? "—"}
-                  </td>
-                  <td
-                    className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
-                    style={{ width: colWidths[6] }}
-                  >
-                    {m.materiale2026Consegna ?? "—"}
-                  </td>
-                  <td
-                    className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
-                    style={{ width: colWidths[7] }}
-                  >
-                    {m.spedizione ?? "—"}
-                  </td>
-                  <td
-                    className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
-                    style={{ width: colWidths[8] }}
-                  >
-                    {m.genere ?? "—"}
-                  </td>
-                  <td
-                    className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
-                    style={{ width: colWidths[9] }}
-                  >
-                    {m.email}
-                  </td>
-                  <td
-                    className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
-                    style={{ width: colWidths[10] }}
-                  >
-                    {m.phone ?? "—"}
-                  </td>
-                  <td
-                    className="sticky right-0 z-10 bg-white px-4 py-3 dark:bg-zinc-900"
-                    style={{ width: colWidths[11] }}
-                  >
-                    {!isEditing ? (
-                      <div className="flex items-center justify-end gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setEditingId(m.id)}
-                          className="rounded-md p-1 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800 dark:hover:text-white"
-                          aria-label="Modifica iscritto"
-                          title="Modifica"
-                        >
-                          <svg
-                            viewBox="0 0 24 24"
-                            className="h-4 w-4"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M12 20h9" />
-                            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                          </svg>
-                        </button>
-                        <form
-                          action={async () => {
-                            await deleteMember(m.id);
-                          }}
-                          onSubmit={(e) => {
-                            if (!confirm("Eliminare questo iscritto?")) e.preventDefault();
-                          }}
-                        >
-                          <button
-                            type="submit"
-                            className="rounded-md p-1 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/30 dark:hover:text-red-300"
-                            aria-label="Elimina iscritto"
-                            title="Elimina"
-                          >
-                            <svg
-                              viewBox="0 0 24 24"
-                              className="h-4 w-4"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="1.8"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M3 6h18" />
-                              <path d="M8 6V4h8v2" />
-                              <path d="M6 6l1 14h10l1-14" />
-                              <path d="M10 11v6" />
-                              <path d="M14 11v6" />
-                            </svg>
-                          </button>
-                        </form>
-                      </div>
-                    ) : (
-                      <span className="text-xs text-zinc-500">In modifica</span>
-                    )}
-                  </td>
+                  {columnOrder.map((colIndex) => cells[colIndex])}
                 </tr>
                 {isEditing && (
                   <tr>
