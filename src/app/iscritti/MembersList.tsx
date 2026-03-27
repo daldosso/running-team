@@ -124,6 +124,25 @@ export function MembersList({ members: list }: { members: Member[] }) {
     }
   };
 
+  const statusRingClass = (status?: string | null) => {
+    const normalized = status?.trim().toLowerCase();
+    switch (normalized) {
+      case "attivo":
+      case "attiva":
+      case "active":
+        return "ring-2 ring-emerald-500/70";
+      case "in sospeso":
+      case "pending":
+        return "ring-2 ring-amber-500/70";
+      case "scaduto":
+      case "scaduta":
+      case "inactive":
+        return "ring-2 ring-rose-500/70";
+      default:
+        return "ring-1 ring-zinc-200 dark:ring-zinc-700";
+    }
+  };
+
   if (list.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-zinc-300 py-8 text-center text-zinc-500 dark:border-zinc-600">
@@ -190,7 +209,13 @@ export function MembersList({ members: list }: { members: Member[] }) {
                   className="border-b border-zinc-100 last:border-0 dark:border-zinc-800"
                 >
                   <td className="px-4 py-3" style={{ width: colWidths[0] }}>
-                    <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-zinc-200 bg-zinc-100 text-[10px] font-semibold text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                    <button
+                      type="button"
+                      onClick={() => setEditingId(m.id)}
+                      className={`flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-zinc-200 bg-zinc-100 text-[10px] font-semibold text-zinc-500 transition hover:scale-[1.02] hover:shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 ${statusRingClass(m.status)}`}
+                      aria-label={`Modifica ${m.firstName} ${m.lastName}`}
+                      title="Modifica iscritto"
+                    >
                       {m.photoUrl ? (
                         <img
                           src={m.photoUrl}
@@ -202,7 +227,7 @@ export function MembersList({ members: list }: { members: Member[] }) {
                           {`${m.firstName?.[0] ?? ""}${m.lastName?.[0] ?? ""}`.toUpperCase()}
                         </span>
                       )}
-                    </div>
+                    </button>
                   </td>
                   <td className="px-4 py-3" style={{ width: colWidths[1] }}>
                     {m.firstName} {m.lastName}
