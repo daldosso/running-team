@@ -19,13 +19,19 @@ export async function createEvent(formData: EventFormData) {
   const orgId = await getOrganizationId();
   if (!orgId) return { ok: false, error: "Organizzazione non specificata" };
 
+  const title = formData.title?.trim();
+  const date = formData.date?.trim();
+  if (!title || !date) {
+    return { ok: false, error: "Titolo e data sono obbligatori" };
+  }
+
   const [row] = await db
     .insert(events)
     .values({
       organizationId: orgId,
-      title: formData.title.trim(),
+      title,
       description: formData.description?.trim() || null,
-      date: formData.date,
+      date,
       time: formData.time?.trim() || null,
       location: formData.location?.trim() || null,
       raceId: formData.raceId || null,
@@ -86,4 +92,3 @@ export async function removeEventParticipant(eventId: string, memberId: string) 
   revalidatePath(`/eventi/${eventId}`);
   return { ok: true };
 }
-

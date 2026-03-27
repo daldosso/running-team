@@ -21,12 +21,23 @@ export async function createRace(formData: RaceFormData) {
   const orgId = await getOrganizationId();
   if (!orgId) return { ok: false, error: "Organizzazione non specificata" };
 
+  const raceDate = formData.raceDate?.trim();
+  const type = formData.type?.trim();
+  const name = formData.name?.trim();
+  const location = formData.location?.trim();
+  if (!raceDate || !type || !name || !location) {
+    return {
+      ok: false,
+      error: "Data, tipo, nome e località sono obbligatori",
+    };
+  }
+
   await db.insert(races).values({
     organizationId: orgId,
-    raceDate: formData.raceDate,
-    type: formData.type.trim(),
-    name: formData.name.trim(),
-    location: formData.location.trim(),
+    raceDate,
+    type,
+    name,
+    location,
     province: formData.province?.trim() || null,
     distance: formData.distance?.trim() || null,
     time: formData.time?.trim() || null,

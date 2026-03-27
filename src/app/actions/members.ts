@@ -39,11 +39,18 @@ export async function createMember(formData: MemberFormData) {
   const orgId = await getOrganizationId();
   if (!orgId) return { ok: false, error: "Organizzazione non specificata" };
 
+  const firstName = formData.firstName?.trim();
+  const lastName = formData.lastName?.trim();
+  const email = formData.email?.trim().toLowerCase();
+  if (!firstName || !lastName || !email) {
+    return { ok: false, error: "Nome, cognome ed email sono obbligatori" };
+  }
+
   await db.insert(members).values({
     organizationId: orgId,
-    firstName: formData.firstName.trim(),
-    lastName: formData.lastName.trim(),
-    email: formData.email.trim().toLowerCase(),
+    firstName,
+    lastName,
+    email,
     phone: formData.phone?.trim() || null,
     birthDate: formData.birthDate || null,
     tessera: formData.tessera?.trim() || null,
@@ -77,12 +84,19 @@ export async function updateMember(id: string, formData: MemberFormData) {
   const orgId = await getOrganizationId();
   if (!orgId) return { ok: false, error: "Organizzazione non specificata" };
 
+  const firstName = formData.firstName?.trim();
+  const lastName = formData.lastName?.trim();
+  const email = formData.email?.trim().toLowerCase();
+  if (!firstName || !lastName || !email) {
+    return { ok: false, error: "Nome, cognome ed email sono obbligatori" };
+  }
+
   await db
     .update(members)
     .set({
-      firstName: formData.firstName.trim(),
-      lastName: formData.lastName.trim(),
-      email: formData.email.trim().toLowerCase(),
+      firstName,
+      lastName,
+      email,
       phone: formData.phone?.trim() || null,
       birthDate: formData.birthDate || null,
       tessera: formData.tessera?.trim() || null,
