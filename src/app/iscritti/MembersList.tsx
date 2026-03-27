@@ -100,10 +100,16 @@ export function MembersList({
   members: list,
   initialColumnOrder,
   initialColumnWidths,
+  initialSortColumn,
+  initialSortDirection,
+  initialSearchQuery,
 }: {
   members: Member[];
   initialColumnOrder?: number[];
   initialColumnWidths?: number[];
+  initialSortColumn?: number | null;
+  initialSortDirection?: "asc" | "desc";
+  initialSearchQuery?: string;
 }) {
   const router = useRouter();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -121,7 +127,14 @@ export function MembersList({
   const [sortState, setSortState] = useState<{
     index: number | null;
     direction: "asc" | "desc";
-  }>({ index: null, direction: "asc" });
+  }>({
+    index: typeof initialSortColumn === "number" ? initialSortColumn : null,
+    direction: initialSortDirection ?? "asc",
+  });
+  const [searchTerm, setSearchTerm] = useState(initialSearchQuery ?? "");
+  const [debouncedSearch, setDebouncedSearch] = useState(
+    initialSearchQuery ?? ""
+  );
   const resizeRef = useRef<{
     index: number;
     startX: number;
@@ -140,15 +153,54 @@ export function MembersList({
       void saveTablePreferences("iscritti", {
         columnOrder,
         columnWidths: colWidths,
+        sortColumn: sortState.index,
+        sortDirection: sortState.direction,
+        searchQuery: searchTerm,
       });
     }, 500);
     return () => window.clearTimeout(timeout);
-  }, [columnOrder, colWidths]);
+  }, [columnOrder, colWidths, sortState, searchTerm]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 300);
+    return () => window.clearTimeout(timeout);
+  }, [searchTerm]);
+
+  const filteredList = useMemo(() => {
+    const query = debouncedSearch.trim().toLowerCase();
+    if (!query) return list;
+    return list.filter((member) => {
+      const fields = [
+        member.firstName,
+        member.lastName,
+        member.email,
+        member.phone,
+        member.tessera,
+        member.codiceFiscale,
+        member.categoria,
+        member.status,
+        member.materiale2026Consegna,
+        member.spedizione,
+        member.genere,
+        member.luogoNascita,
+        member.indirizzo,
+        member.cap,
+        member.citta,
+        member.prov,
+        member.notes,
+      ];
+      return fields.some((value) =>
+        (value ?? "").toLowerCase().includes(query)
+      );
+    });
+  }, [list, searchTerm]);
 
   const sortedList = useMemo(() => {
-    if (sortState.index === null) return list;
+    if (sortState.index === null) return filteredList;
     const sortIndex = sortState.index;
-    const next = [...list];
+    const next = [...filteredList];
     const direction = sortState.direction === "asc" ? 1 : -1;
     next.sort((a, b) => {
       const valueA = getSortableValue(a, sortIndex);
@@ -156,7 +208,7 @@ export function MembersList({
       return valueA.localeCompare(valueB, "it", { sensitivity: "base" }) * direction;
     });
     return next;
-  }, [list, sortState]);
+  }, [filteredList, sortState]);
 
   useEffect(() => {
     const handleMove = (event: MouseEvent) => {
@@ -287,7 +339,28 @@ export function MembersList({
 
   return (
     <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="flex items-center justify-end border-b border-zinc-200 px-3 py-2 text-xs text-zinc-500 dark:border-zinc-800">
+      <div className="flex flex-col gap-2 border-b border-zinc-200 px-3 py-2 text-xs text-zinc-500 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="search"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Cerca iscritti..."
+            className="h-8 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-700 shadow-sm placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 sm:w-64"
+          />
+          {searchTerm ? (
+            <button
+              type="button"
+              onClick={() => setSearchTerm("")}
+              className="rounded-md px-2 py-1 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white"
+            >
+              Pulisci
+            </button>
+          ) : null}
+          <span className="text-zinc-400">
+            {filteredList.length} / {list.length} iscritti
+          </span>
+        </div>
         <button
           type="button"
           onClick={async () => {
@@ -295,6 +368,7 @@ export function MembersList({
             setColumnOrder(normalizeColumnOrder(undefined));
             setColWidths(normalizeColumnWidths(undefined));
             setSortState({ index: null, direction: "asc" });
+            setSearchTerm("");
           }}
           className="rounded-md px-2 py-1 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white"
         >

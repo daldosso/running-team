@@ -34,6 +34,9 @@ export default async function IscrittiPage() {
           members={list}
           initialColumnOrder={preferences?.columnOrder}
           initialColumnWidths={preferences?.columnWidths}
+          initialSortColumn={preferences?.sortColumn ?? null}
+          initialSortDirection={preferences?.sortDirection}
+          initialSearchQuery={preferences?.searchQuery ?? ""}
         />
       </div>
     </div>

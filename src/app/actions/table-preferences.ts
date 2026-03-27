@@ -12,6 +12,9 @@ import { getSession } from "@/lib/auth";
 export type TablePreferences = {
   columnOrder?: number[];
   columnWidths?: number[];
+  sortColumn?: number | null;
+  sortDirection?: "asc" | "desc";
+  searchQuery?: string | null;
 };
 
 const parseNumericArray = (value?: string | null) => {
@@ -26,6 +29,18 @@ const parseNumericArray = (value?: string | null) => {
   } catch {
     return undefined;
   }
+};
+
+const parseSortColumn = (value?: string | null) => {
+  if (!value) return null;
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return null;
+  return numeric;
+};
+
+const parseSortDirection = (value?: string | null) => {
+  if (value === "asc" || value === "desc") return value;
+  return undefined;
 };
 
 export async function getTablePreferences(
@@ -51,6 +66,9 @@ export async function getTablePreferences(
   return {
     columnOrder: parseNumericArray(row.columnOrder),
     columnWidths: parseNumericArray(row.columnWidths),
+    sortColumn: parseSortColumn(row.sortColumn),
+    sortDirection: parseSortDirection(row.sortDirection),
+    searchQuery: row.searchQuery ?? null,
   };
 }
 
@@ -68,6 +86,13 @@ export async function saveTablePreferences(
   const columnWidths = preferences.columnWidths
     ? JSON.stringify(preferences.columnWidths)
     : null;
+  const sortColumn =
+    preferences.sortColumn === null || preferences.sortColumn === undefined
+      ? null
+      : String(preferences.sortColumn);
+  const sortDirection = preferences.sortDirection ?? null;
+  const searchQuery =
+    preferences.searchQuery === undefined ? null : preferences.searchQuery;
 
   if (session?.userId) {
     await db
@@ -78,6 +103,9 @@ export async function saveTablePreferences(
         tableKey,
         columnOrder,
         columnWidths,
+        sortColumn,
+        sortDirection,
+        searchQuery,
         updatedAt: new Date(),
       })
       .onConflictDoUpdate({
@@ -89,6 +117,9 @@ export async function saveTablePreferences(
         set: {
           columnOrder,
           columnWidths,
+          sortColumn,
+          sortDirection,
+          searchQuery,
           updatedAt: new Date(),
         },
       });
@@ -100,6 +131,9 @@ export async function saveTablePreferences(
         tableKey,
         columnOrder,
         columnWidths,
+        sortColumn,
+        sortDirection,
+        searchQuery,
         updatedAt: new Date(),
       })
       .onConflictDoUpdate({
@@ -110,6 +144,9 @@ export async function saveTablePreferences(
         set: {
           columnOrder,
           columnWidths,
+          sortColumn,
+          sortDirection,
+          searchQuery,
           updatedAt: new Date(),
         },
       });
@@ -140,6 +177,9 @@ export async function getTablePreferencesWithFallback(
       return {
         columnOrder: parseNumericArray(row.columnOrder),
         columnWidths: parseNumericArray(row.columnWidths),
+        sortColumn: parseSortColumn(row.sortColumn),
+        sortDirection: parseSortDirection(row.sortDirection),
+        searchQuery: row.searchQuery ?? null,
       };
     }
   }
@@ -157,6 +197,9 @@ export async function getTablePreferencesWithFallback(
   return {
     columnOrder: parseNumericArray(orgRow.columnOrder),
     columnWidths: parseNumericArray(orgRow.columnWidths),
+    sortColumn: parseSortColumn(orgRow.sortColumn),
+    sortDirection: parseSortDirection(orgRow.sortDirection),
+    searchQuery: orgRow.searchQuery ?? null,
   };
 }
 

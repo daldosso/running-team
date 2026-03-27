@@ -110,6 +110,9 @@ export const userTablePreferences = pgTable(
     tableKey: text("table_key").notNull(),
     columnOrder: text("column_order"),
     columnWidths: text("column_widths"),
+    sortColumn: text("sort_column"),
+    sortDirection: text("sort_direction"),
+    searchQuery: text("search_query"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -139,6 +142,9 @@ export const organizationTablePreferences = pgTable(
     tableKey: text("table_key").notNull(),
     columnOrder: text("column_order"),
     columnWidths: text("column_widths"),
+    sortColumn: text("sort_column"),
+    sortDirection: text("sort_direction"),
+    searchQuery: text("search_query"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
