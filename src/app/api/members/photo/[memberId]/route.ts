@@ -39,6 +39,9 @@ export async function GET(
 
   try {
     const blob = await get(pathname, { access: "private" });
+    if (!blob) {
+      return NextResponse.json({ error: "Foto non trovata" }, { status: 404 });
+    }
     const headers = new Headers();
     if (blob.contentType) headers.set("content-type", blob.contentType);
     if (blob.contentDisposition)
