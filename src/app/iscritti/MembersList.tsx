@@ -76,7 +76,7 @@ export function MembersList({ members: list }: { members: Member[] }) {
     if (!editingId) return;
     const current = list.find((m) => m.id === editingId);
     setActiveTab("profilo");
-    setPhotoPreview(current?.photoUrl ?? null);
+    setPhotoPreview(current?.photoUrl ? `/api/members/photo/${current.id}` : null);
     setPhotoError(null);
   }, [editingId, list]);
 
@@ -96,7 +96,9 @@ export function MembersList({ members: list }: { members: Member[] }) {
         setPhotoError(data.error || "Upload fallito");
         return;
       }
-      setPhotoPreview(data.url ?? null);
+      setPhotoPreview(
+        data.url ? `/api/members/photo/${memberId}?t=${Date.now()}` : null
+      );
       router.refresh();
     } catch {
       setPhotoError("Upload fallito");
@@ -205,7 +207,8 @@ export function MembersList({ members: list }: { members: Member[] }) {
         <tbody>
           {list.map((m) => {
             const isEditing = editingId === m.id;
-            const currentPhoto = isEditing ? photoPreview ?? m.photoUrl ?? null : null;
+            const serverPhoto = m.photoUrl ? `/api/members/photo/${m.id}` : null;
+            const currentPhoto = isEditing ? photoPreview ?? serverPhoto : serverPhoto;
 
             return (
               <Fragment key={m.id}>

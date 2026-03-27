@@ -62,10 +62,8 @@ export async function POST(request: Request) {
   const pathname = `${orgId}/members/${memberId}-${Date.now()}${ext}`;
 
   try {
-    // SDK types only allow "public", but private stores require "private".
-    const access = "private" as "public";
     const blob = await put(pathname, file, {
-      access,
+      access: "private",
       addRandomSuffix: true,
       contentType: type,
     });
@@ -73,16 +71,12 @@ export async function POST(request: Request) {
     await db
       .update(members)
       .set({
-        photoUrl: blob.url,
+        photoUrl: blob.pathname,
         updatedAt: new Date(),
       })
       .where(and(eq(members.id, memberId), eq(members.organizationId, orgId)));
 
-    return NextResponse.json({
-      ok: true,
-      url: blob.downloadUrl ?? blob.url,
-      blobUrl: blob.url,
-    });
+    return NextResponse.json({ ok: true, url: blob.pathname });
   } catch (error) {
     console.error("Member photo upload failed", {
       memberId,
