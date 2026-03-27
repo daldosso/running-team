@@ -80,6 +80,14 @@ export function Nav() {
               Iscritti
             </Link>
           )}
+          {isAdmin && (
+            <Link
+              href="/utenze"
+              className="rounded-full border border-transparent px-3 py-1 text-sm font-medium text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-white"
+            >
+              Utenze
+            </Link>
+          )}
           {(isAdmin || isRunner) && (
             <Link
               href="/pagamenti"
