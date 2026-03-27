@@ -1,4 +1,5 @@
 import { getOrganizationId } from "@/lib/org-context";
+import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { races } from "@/lib/db/schema";
 import { desc, eq } from "drizzle-orm";
@@ -8,6 +9,8 @@ import { RacesList } from "./RacesList";
 export const dynamic = "force-dynamic";
 
 export default async function GarePage() {
+  const session = await getSession();
+  const canManage = session?.role === "owner" || session?.role === "admin";
   const orgId = await getOrganizationId();
   if (!orgId) {
     return (
@@ -30,7 +33,7 @@ export default async function GarePage() {
           <code className="rounded bg-zinc-200 px-1 dark:bg-zinc-700">POST /api/seed-races</code>
         </p>
       </div>
-      <RacesList races={list} />
+      <RacesList races={list} canManage={canManage} />
     </div>
   );
 }

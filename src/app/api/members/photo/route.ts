@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { members } from "@/lib/db/schema";
+import { members, users } from "@/lib/db/schema";
 import { getOrganizationId } from "@/lib/org-context";
+import { getSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,11 @@ export async function POST(request: Request) {
       { error: "Organizzazione non specificata" },
       { status: 400 }
     );
+  }
+
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Non autorizzato" }, { status: 401 });
   }
 
   if (!process.env.BLOB_READ_WRITE_TOKEN) {
@@ -36,8 +42,41 @@ export async function POST(request: Request) {
     );
   }
 
-  const memberId = formData.get("memberId") as string | null;
+  const requestedMemberId = formData.get("memberId") as string | null;
   const file = formData.get("file") as File | null;
+
+  const canManage = session.role === "owner" || session.role === "admin";
+  let memberId = requestedMemberId;
+
+  if (!canManage) {
+    const [user] = await db
+      .select({ memberId: users.memberId, email: users.email })
+      .from(users)
+      .where(eq(users.id, session.userId))
+      .limit(1);
+
+    memberId = user?.memberId ?? null;
+    const userEmail = user?.email?.trim().toLowerCase();
+    if (!memberId && userEmail) {
+      const [member] = await db
+        .select({ id: members.id })
+        .from(members)
+        .where(and(eq(members.organizationId, orgId), eq(members.email, userEmail)))
+        .limit(1);
+      memberId = member?.id ?? null;
+    }
+
+    if (!memberId) {
+      return NextResponse.json(
+        { error: "Profilo runner non trovato" },
+        { status: 404 }
+      );
+    }
+
+    if (requestedMemberId && requestedMemberId !== memberId) {
+      return NextResponse.json({ error: "Operazione non consentita" }, { status: 403 });
+    }
+  }
 
   if (!memberId) {
     return NextResponse.json({ error: "Member ID mancante" }, { status: 400 });
@@ -100,6 +139,11 @@ export async function DELETE(request: Request) {
     );
   }
 
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Non autorizzato" }, { status: 401 });
+  }
+
   let payload: { memberId?: string } | null = null;
   try {
     payload = await request.json();
@@ -107,7 +151,40 @@ export async function DELETE(request: Request) {
     payload = null;
   }
 
-  if (!payload?.memberId) {
+  const canManage = session.role === "owner" || session.role === "admin";
+  let memberId = payload?.memberId ?? null;
+
+  if (!canManage) {
+    const [user] = await db
+      .select({ memberId: users.memberId, email: users.email })
+      .from(users)
+      .where(eq(users.id, session.userId))
+      .limit(1);
+
+    memberId = user?.memberId ?? null;
+    const userEmail = user?.email?.trim().toLowerCase();
+    if (!memberId && userEmail) {
+      const [member] = await db
+        .select({ id: members.id })
+        .from(members)
+        .where(and(eq(members.organizationId, orgId), eq(members.email, userEmail)))
+        .limit(1);
+      memberId = member?.id ?? null;
+    }
+
+    if (!memberId) {
+      return NextResponse.json(
+        { error: "Profilo runner non trovato" },
+        { status: 404 }
+      );
+    }
+
+    if (payload?.memberId && payload.memberId !== memberId) {
+      return NextResponse.json({ error: "Operazione non consentita" }, { status: 403 });
+    }
+  }
+
+  if (!memberId) {
     return NextResponse.json({ error: "Member ID mancante" }, { status: 400 });
   }
 
@@ -118,7 +195,7 @@ export async function DELETE(request: Request) {
         photoUrl: null,
         updatedAt: new Date(),
       })
-      .where(and(eq(members.id, payload.memberId), eq(members.organizationId, orgId)));
+      .where(and(eq(members.id, memberId), eq(members.organizationId, orgId)));
 
     return NextResponse.json({ ok: true });
   } catch (error) {
