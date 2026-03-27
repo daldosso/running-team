@@ -80,11 +80,11 @@ export default async function UtenzePage() {
                           const memberId = (fd.get("memberId") as string) || null;
                           await linkUserToMember(u.id, memberId);
                         }}
+                        className="flex items-center gap-2"
                       >
                         <select
                           name="memberId"
                           defaultValue={u.memberId ?? ""}
-                          onChange={(e) => e.currentTarget.form?.requestSubmit()}
                           className="w-full rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
                         >
                           <option value="">—</option>
@@ -94,6 +94,12 @@ export default async function UtenzePage() {
                             </option>
                           ))}
                         </select>
+                        <button
+                          type="submit"
+                          className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                        >
+                          Salva
+                        </button>
                       </form>
                     </td>
                     <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
