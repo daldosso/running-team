@@ -96,6 +96,65 @@ export const organizationMembers = pgTable(
   ]
 );
 
+// Preferenze tabellari (ordine colonne, larghezza, ecc.)
+export const userTablePreferences = pgTable(
+  "user_table_preferences",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tableKey: text("table_key").notNull(),
+    columnOrder: text("column_order"),
+    columnWidths: text("column_widths"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("user_table_prefs_org_idx").on(table.organizationId),
+    index("user_table_prefs_user_idx").on(table.userId),
+    uniqueIndex("user_table_prefs_unique").on(
+      table.organizationId,
+      table.userId,
+      table.tableKey
+    ),
+  ]
+);
+
+// Preferenze tabellari per organizzazione (fallback anonimi)
+export const organizationTablePreferences = pgTable(
+  "organization_table_preferences",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    tableKey: text("table_key").notNull(),
+    columnOrder: text("column_order"),
+    columnWidths: text("column_widths"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("org_table_prefs_org_idx").on(table.organizationId),
+    uniqueIndex("org_table_prefs_unique").on(
+      table.organizationId,
+      table.tableKey
+    ),
+  ]
+);
+
 // Iscritti (membri della squadra di corsa)
 export const members = pgTable(
   "members",
@@ -329,6 +388,12 @@ export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type OrganizationMember = typeof organizationMembers.$inferSelect;
 export type NewOrganizationMember = typeof organizationMembers.$inferInsert;
+export type UserTablePreference = typeof userTablePreferences.$inferSelect;
+export type NewUserTablePreference = typeof userTablePreferences.$inferInsert;
+export type OrganizationTablePreference =
+  typeof organizationTablePreferences.$inferSelect;
+export type NewOrganizationTablePreference =
+  typeof organizationTablePreferences.$inferInsert;
 export type Member = typeof members.$inferSelect;
 export type NewMember = typeof members.$inferInsert;
 export type Payment = typeof payments.$inferSelect;

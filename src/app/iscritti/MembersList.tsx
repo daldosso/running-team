@@ -1,9 +1,13 @@
 "use client";
 
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Member } from "@/lib/db/schema";
 import { deleteMember, updateMember } from "@/app/actions/members";
+import {
+  clearTablePreferences,
+  saveTablePreferences,
+} from "@/app/actions/table-preferences";
 
 const COLUMN_LABELS = [
   "",
@@ -35,24 +39,123 @@ const DEFAULT_COLUMN_WIDTHS = [
   80, // Azioni
 ];
 
-export function MembersList({ members: list }: { members: Member[] }) {
+const normalizeColumnOrder = (order?: number[]) => {
+  const base = COLUMN_LABELS.map((_, index) => index);
+  if (!order || order.length === 0) return base;
+  const filtered = order.filter(
+    (value) =>
+      Number.isFinite(value) &&
+      Number.isInteger(value) &&
+      value >= 0 &&
+      value < base.length
+  );
+  const withoutFixed = filtered.filter((value) => value !== 0 && value !== 11);
+  const used = new Set(withoutFixed);
+  const normalized = [0, ...withoutFixed];
+  base.forEach((index) => {
+    if (index === 0 || index === 11) return;
+    if (!used.has(index)) normalized.push(index);
+  });
+  normalized.push(11);
+  return normalized;
+};
+
+const normalizeColumnWidths = (widths?: number[]) => {
+  const next = DEFAULT_COLUMN_WIDTHS.map((value, index) => {
+    const candidate = widths?.[index];
+    if (typeof candidate !== "number" || !Number.isFinite(candidate)) return value;
+    return Math.max(80, Math.round(candidate));
+  });
+  return next;
+};
+
+const getSortableValue = (member: Member, index: number) => {
+  switch (index) {
+    case 1:
+      return `${member.firstName ?? ""} ${member.lastName ?? ""}`.trim();
+    case 2:
+      return member.tessera ?? "";
+    case 3:
+      return member.codiceFiscale ?? "";
+    case 4:
+      return member.categoria ?? "";
+    case 5:
+      return member.status ?? "";
+    case 6:
+      return member.materiale2026Consegna ?? "";
+    case 7:
+      return member.spedizione ?? "";
+    case 8:
+      return member.genere ?? "";
+    case 9:
+      return member.email ?? "";
+    case 10:
+      return member.phone ?? "";
+    default:
+      return "";
+  }
+};
+
+export function MembersList({
+  members: list,
+  initialColumnOrder,
+  initialColumnWidths,
+}: {
+  members: Member[];
+  initialColumnOrder?: number[];
+  initialColumnWidths?: number[];
+}) {
   const router = useRouter();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"profilo" | "dettagli">("profilo");
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
-  const [colWidths, setColWidths] = useState<number[]>(DEFAULT_COLUMN_WIDTHS);
+  const [colWidths, setColWidths] = useState<number[]>(
+    () => normalizeColumnWidths(initialColumnWidths)
+  );
   const [columnOrder, setColumnOrder] = useState<number[]>(
-    () => COLUMN_LABELS.map((_, index) => index)
+    () => normalizeColumnOrder(initialColumnOrder)
   );
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [sortState, setSortState] = useState<{
+    index: number | null;
+    direction: "asc" | "desc";
+  }>({ index: null, direction: "asc" });
   const resizeRef = useRef<{
     index: number;
     startX: number;
     startWidth: number;
   } | null>(null);
   const dragRef = useRef<number | null>(null);
+  const didMountRef = useRef(false);
+
+  useEffect(() => {
+    didMountRef.current = true;
+  }, []);
+
+  useEffect(() => {
+    if (!didMountRef.current) return;
+    const timeout = window.setTimeout(() => {
+      void saveTablePreferences("iscritti", {
+        columnOrder,
+        columnWidths: colWidths,
+      });
+    }, 500);
+    return () => window.clearTimeout(timeout);
+  }, [columnOrder, colWidths]);
+
+  const sortedList = useMemo(() => {
+    if (sortState.index === null) return list;
+    const next = [...list];
+    const direction = sortState.direction === "asc" ? 1 : -1;
+    next.sort((a, b) => {
+      const valueA = getSortableValue(a, sortState.index);
+      const valueB = getSortableValue(b, sortState.index);
+      return valueA.localeCompare(valueB, "it", { sensitivity: "base" }) * direction;
+    });
+    return next;
+  }, [list, sortState]);
 
   useEffect(() => {
     const handleMove = (event: MouseEvent) => {
@@ -171,6 +274,7 @@ export function MembersList({ members: list }: { members: Member[] }) {
 
   const isDraggableColumn = (index: number) => index !== 0 && index !== 11;
   const isDroppableColumn = (index: number) => index !== 0 && index !== 11;
+  const isSortableColumn = (index: number) => index >= 1 && index <= 10;
 
   if (list.length === 0) {
     return (
@@ -182,6 +286,20 @@ export function MembersList({ members: list }: { members: Member[] }) {
 
   return (
     <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex items-center justify-end border-b border-zinc-200 px-3 py-2 text-xs text-zinc-500 dark:border-zinc-800">
+        <button
+          type="button"
+          onClick={async () => {
+            await clearTablePreferences("iscritti");
+            setColumnOrder(normalizeColumnOrder(undefined));
+            setColWidths(normalizeColumnWidths(undefined));
+            setSortState({ index: null, direction: "asc" });
+          }}
+          className="rounded-md px-2 py-1 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white"
+        >
+          Ripristina colonne
+        </button>
+      </div>
       <div className="overflow-x-auto">
         <table className="min-w-[1800px] w-full table-fixed text-left text-sm whitespace-nowrap">
         <thead>
@@ -191,6 +309,8 @@ export function MembersList({ members: list }: { members: Member[] }) {
               const isSticky = colIndex === 11;
               const isDraggable = isDraggableColumn(colIndex);
               const isDroppable = isDroppableColumn(colIndex);
+              const isSortable = isSortableColumn(colIndex);
+              const isSorted = sortState.index === colIndex;
               const isDragOver = dragOverIndex === colIndex && isDroppable;
               return (
                 <th
@@ -239,7 +359,30 @@ export function MembersList({ members: list }: { members: Member[] }) {
                     isDragOver ? " ring-2 ring-inset ring-zinc-400/60" : ""
                   }`}
                 >
-                  <span className="select-none">{label}</span>
+                  {isSortable ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSortState((prev) => {
+                          if (prev.index === colIndex) {
+                            return {
+                              index: colIndex,
+                              direction: prev.direction === "asc" ? "desc" : "asc",
+                            };
+                          }
+                          return { index: colIndex, direction: "asc" };
+                        });
+                      }}
+                      className="inline-flex items-center gap-1 text-left"
+                    >
+                      <span className="select-none">{label}</span>
+                      <span className="text-[10px] text-zinc-400">
+                        {isSorted ? (sortState.direction === "asc" ? "▲" : "▼") : "↕"}
+                      </span>
+                    </button>
+                  ) : (
+                    <span className="select-none">{label}</span>
+                  )}
                   {label ? (
                     <button
                       type="button"
@@ -262,7 +405,7 @@ export function MembersList({ members: list }: { members: Member[] }) {
           </tr>
         </thead>
         <tbody>
-          {list.map((m) => {
+          {sortedList.map((m) => {
             const isEditing = editingId === m.id;
             const serverPhoto = m.photoUrl ? `/api/members/photo/${m.id}` : null;
             const currentPhoto = isEditing ? photoPreview ?? serverPhoto : serverPhoto;

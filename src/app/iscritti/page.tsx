@@ -4,6 +4,7 @@ import { members } from "@/lib/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { MemberForm } from "./MemberForm";
 import { MembersList } from "./MembersList";
+import { getTablePreferencesWithFallback } from "@/app/actions/table-preferences";
 
 export const dynamic = "force-dynamic";
 
@@ -22,13 +23,18 @@ export default async function IscrittiPage() {
     .from(members)
     .where(eq(members.organizationId, orgId))
     .orderBy(desc(members.createdAt));
+  const preferences = await getTablePreferencesWithFallback("iscritti");
 
   return (
     <div>
       <h1 className="mb-6 text-2xl font-bold tracking-tight">Iscritti</h1>
       <MemberForm className="mb-8" />
       <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8">
-        <MembersList members={list} />
+        <MembersList
+          members={list}
+          initialColumnOrder={preferences?.columnOrder}
+          initialColumnWidths={preferences?.columnWidths}
+        />
       </div>
     </div>
   );
