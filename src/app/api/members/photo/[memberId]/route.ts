@@ -42,7 +42,10 @@ export async function GET(
     if (!result) {
       return NextResponse.json({ error: "Foto non trovata" }, { status: 404 });
     }
-    const headers = new Headers(result.headers);
+    const headers = new Headers();
+    result.headers.forEach((value, key) => {
+      headers.set(key, value);
+    });
     return new NextResponse(result.stream, { status: 200, headers });
   } catch (error) {
     console.error("Member photo fetch failed", {
