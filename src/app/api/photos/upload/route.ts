@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     const pathname = `${orgId}/${Date.now()}-${i}${ext}`;
 
     const blob = await put(pathname, file, {
-      access: "public",
+      access: "private",
       addRandomSuffix: true,
       contentType: type,
     });
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
       .values({
         organizationId: orgId,
         raceId: raceId || null,
-        url: blob.url,
+        url: blob.pathname,
         filename: file.name || pathname,
         caption: caption && i === 0 ? caption : null,
       })

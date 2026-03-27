@@ -51,18 +51,21 @@ export function PhotoGrid({
       )}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-        {filtered.map((p) => (
+        {filtered.map((p) => {
+          const isExternal = p.url.startsWith("http");
+          const src = isExternal ? p.url : `/api/photos/${p.id}`;
+          return (
           <div
             key={p.id}
             className="group relative aspect-square overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800"
           >
             <Image
-              src={p.url}
+              src={src}
               alt={p.caption || p.filename}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
               className="object-cover"
-              unoptimized={p.url.includes("blob.vercel-storage")}
+              unoptimized={isExternal || src.includes("/api/photos/")}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
             <div className="absolute bottom-0 left-0 right-0 p-2 opacity-0 transition-opacity group-hover:opacity-100">
@@ -92,7 +95,8 @@ export function PhotoGrid({
               </form>
             </div>
           </div>
-        ))}
+        );
+        })}
       </div>
     </div>
   );
