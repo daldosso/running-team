@@ -147,11 +147,12 @@ export function MembersList({
 
   const sortedList = useMemo(() => {
     if (sortState.index === null) return list;
+    const sortIndex = sortState.index;
     const next = [...list];
     const direction = sortState.direction === "asc" ? 1 : -1;
     next.sort((a, b) => {
-      const valueA = getSortableValue(a, sortState.index);
-      const valueB = getSortableValue(b, sortState.index);
+      const valueA = getSortableValue(a, sortIndex);
+      const valueB = getSortableValue(b, sortIndex);
       return valueA.localeCompare(valueB, "it", { sensitivity: "base" }) * direction;
     });
     return next;
