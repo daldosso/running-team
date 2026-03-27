@@ -44,7 +44,7 @@ export function Nav() {
   const isRunFast = orgSlug === "run-fast";
   const brandName = orgName ?? (isRunFast ? "Run Fast" : "Running Team");
   const logoSrc = isRunFast
-    ? "https://www.runfast.it/wp-content/uploads/2017/12/Logo-Run-Fast.png"
+    ? "/Logo-Run-Fast-White.png"
     : "/running-team-logo.png";
 
   return (
