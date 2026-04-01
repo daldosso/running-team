@@ -1,6 +1,7 @@
 "use client";
 
 import type { Payment } from "@/lib/db/schema";
+import { Trash2 } from "lucide-react";
 import { updatePaymentStatus, deletePayment } from "@/app/actions/payments";
 
 type MemberOption = { id: string; firstName: string; lastName: string };
@@ -99,9 +100,10 @@ export function PaymentsList({
                   >
                     <button
                       type="submit"
-                      className="text-red-600 hover:underline dark:text-red-400"
+                      className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                      title="Elimina"
                     >
-                      Elimina
+                      <Trash2 size={16} />
                     </button>
                   </form>
                 </div>
@@ -182,9 +184,10 @@ export function PaymentsList({
                       >
                         <button
                           type="submit"
-                          className="text-red-600 hover:underline dark:text-red-400"
+                          className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                          title="Elimina"
                         >
-                          Elimina
+                          <Trash2 size={16} />
                         </button>
                       </form>
                     </div>

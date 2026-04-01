@@ -2,6 +2,7 @@
 
 import type { Photo } from "@/lib/db/schema";
 import Image from "next/image";
+import { Trash2 } from "lucide-react";
 import { deletePhoto } from "@/app/actions/photos";
 import { useEffect, useState } from "react";
 
@@ -113,9 +114,10 @@ export function PhotoGrid({
               >
                 <button
                   type="submit"
-                  className="text-xs text-red-300 hover:text-white"
+                  className="text-red-300 hover:text-red-100 dark:text-red-400 dark:hover:text-red-300"
+                  title="Elimina"
                 >
-                  Elimina
+                  <Trash2 size={16} />
                 </button>
               </form>
             </div>

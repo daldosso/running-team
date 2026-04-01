@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Trash2, Edit2 } from "lucide-react";
 import type { Member } from "@/lib/db/schema";
 import { deleteMember, updateMember } from "@/app/actions/members";
 import {
@@ -888,18 +889,7 @@ export function MembersList({
                       aria-label="Modifica iscritto"
                       title="Modifica"
                     >
-                      <svg
-                        viewBox="0 0 24 24"
-                        className="h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M12 20h9" />
-                        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                      </svg>
+                      <Edit2 size={16} />
                     </button>
                     <form
                       action={async () => {
@@ -915,21 +905,7 @@ export function MembersList({
                         aria-label="Elimina iscritto"
                         title="Elimina"
                       >
-                        <svg
-                          viewBox="0 0 24 24"
-                          className="h-4 w-4"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M3 6h18" />
-                          <path d="M8 6V4h8v2" />
-                          <path d="M6 6l1 14h10l1-14" />
-                          <path d="M10 11v6" />
-                          <path d="M14 11v6" />
-                        </svg>
+                        <Trash2 size={16} />
                       </button>
                     </form>
                   </div>

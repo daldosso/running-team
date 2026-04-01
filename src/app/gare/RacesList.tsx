@@ -2,6 +2,7 @@
 
 import type { Race } from "@/lib/db/schema";
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import { deleteRace } from "@/app/actions/races";
 
 export function RacesList({
@@ -63,9 +64,10 @@ export function RacesList({
               >
                 <button
                   type="submit"
-                  className="text-xs text-red-600 hover:underline dark:text-red-400"
+                  className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                  title="Elimina"
                 >
-                  Elimina
+                  <Trash2 size={16} />
                 </button>
               </form>
             )}
@@ -120,9 +122,10 @@ export function RacesList({
                     >
                       <button
                         type="submit"
-                        className="text-red-600 hover:underline dark:text-red-400"
+                        className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                        title="Elimina"
                       >
-                        Elimina
+                        <Trash2 size={16} />
                       </button>
                     </form>
                   ) : null}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
 
 export function LogoutButton() {
   const router = useRouter();
@@ -12,9 +13,10 @@ export function LogoutButton() {
         router.push("/login");
         router.refresh();
       }}
-      className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+      className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+      title="Esci"
     >
-      Esci
+      <LogOut size={20} />
     </button>
   );
 }
