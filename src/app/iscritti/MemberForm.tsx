@@ -8,6 +8,13 @@ type MemberOptions = {
   genereOptions: string[];
   materiale2026Options: string[];
   spedizioneOptions: string[];
+  tagliaMagliaCotoneOptions: string[];
+  tagliaMagliaSolarOptions: string[];
+  tagliaMagliaPulsarOptions: string[];
+  tagliaCanottaSolarOptions: string[];
+  tagliaCanottaPulsarOptions: string[];
+  tagliaFelpaSolarOptions: string[];
+  tagliaFelpaPulsarOptions: string[];
 };
 
 export function MemberForm({
@@ -286,64 +293,113 @@ export function MemberForm({
                 <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
                   Maglia cotone
                 </label>
-                <input
+                <select
                   name="tagliaMagliaCotone"
                   className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
-                />
+                >
+                  <option value="">— Seleziona —</option>
+                  {memberOptions?.tagliaMagliaCotoneOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
                   Maglia Solar
                 </label>
-                <input
+                <select
                   name="tagliaMagliaSolar"
                   className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
-                />
+                >
+                  <option value="">— Seleziona —</option>
+                  {memberOptions?.tagliaMagliaSolarOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
                   Maglia Pulsar
                 </label>
-                <input
+                <select
                   name="tagliaMagliaPulsar"
                   className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
-                />
+                >
+                  <option value="">— Seleziona —</option>
+                  {memberOptions?.tagliaMagliaPulsarOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
                   Canotta Solar
                 </label>
-                <input
+                <select
                   name="tagliaCanottaSolar"
                   className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
-                />
+                >
+                  <option value="">— Seleziona —</option>
+                  {memberOptions?.tagliaCanottaSolarOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
                   Canotta Pulsar
                 </label>
-                <input
+                <select
                   name="tagliaCanottaPulsar"
                   className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
-                />
+                >
+                  <option value="">— Seleziona —</option>
+                  {memberOptions?.tagliaCanottaPulsarOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
                   Felpa Solar
                 </label>
-                <input
+                <select
                   name="tagliaFelpaSolar"
                   className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
-                />
+                >
+                  <option value="">— Seleziona —</option>
+                  {memberOptions?.tagliaFelpaSolarOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
                   Felpa Pulsar
                 </label>
-                <input
+                <select
                   name="tagliaFelpaPulsar"
                   className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
-                />
+                >
+                  <option value="">— Seleziona —</option>
+                  {memberOptions?.tagliaFelpaPulsarOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
