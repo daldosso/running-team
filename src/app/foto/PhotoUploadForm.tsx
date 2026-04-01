@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 type RaceOption = { id: string; name: string; raceDate: string };
 
@@ -15,6 +16,7 @@ export function PhotoUploadForm({
   const router = useRouter();
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -52,9 +54,24 @@ export function PhotoUploadForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className={`rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 ${className}`}
+      className={`rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900 ${className}`}
     >
-      <h2 className="mb-4 text-lg font-semibold">Carica foto</h2>
+      <div className="flex items-center justify-between gap-3 border-b border-zinc-100 px-6 py-4 dark:border-zinc-800">
+        <h2 className="text-lg font-semibold">Carica foto</h2>
+        <button
+          type="button"
+          onClick={() => setCollapsed((prev) => !prev)}
+          className="inline-flex items-center justify-center rounded-full border border-zinc-200 p-2 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white"
+          aria-expanded={!collapsed}
+          aria-label={collapsed ? "Apri caricamento foto" : "Chiudi caricamento foto"}
+          title={collapsed ? "Apri caricamento foto" : "Chiudi caricamento foto"}
+        >
+          {collapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+        </button>
+      </div>
+
+      {!collapsed && (
+        <div className="p-6">
 
       <div className="mb-4">
         <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -106,13 +123,15 @@ export function PhotoUploadForm({
         <p className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</p>
       )}
 
-      <button
-        type="submit"
-        disabled={uploading}
-        className="min-h-[48px] min-w-[120px] rounded-lg bg-zinc-900 px-6 py-3 text-base font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
-      >
-        {uploading ? "Caricamento…" : "Carica"}
-      </button>
+          <button
+            type="submit"
+            disabled={uploading}
+            className="min-h-[48px] min-w-[120px] rounded-lg bg-zinc-900 px-6 py-3 text-base font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          >
+            {uploading ? "Caricamento…" : "Carica"}
+          </button>
+        </div>
+      )}
     </form>
   );
 }
