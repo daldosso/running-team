@@ -8,6 +8,10 @@ import {
   clearTablePreferences,
   saveTablePreferences,
 } from "@/app/actions/table-preferences";
+import {
+  exportMembersAsCSV,
+  importMembersFromCSV,
+} from "@/app/actions/members-import-export";
 
 const COLUMN_LABELS = [
   "",
@@ -21,6 +25,8 @@ const COLUMN_LABELS = [
   "Genere",
   "Email",
   "Telefono",
+  "Anno Iscrizione",
+  "Pagamento",
   "",
 ];
 
@@ -36,6 +42,8 @@ const DEFAULT_COLUMN_WIDTHS = [
   90, // Genere
   220, // Email
   130, // Telefono
+  130, // Anno Iscrizione
+  140, // Pagamento
   80, // Azioni
 ];
 
@@ -49,14 +57,14 @@ const normalizeColumnOrder = (order?: number[]) => {
       value >= 0 &&
       value < base.length
   );
-  const withoutFixed = filtered.filter((value) => value !== 0 && value !== 11);
+  const withoutFixed = filtered.filter((value) => value !== 0 && value !== 13);
   const used = new Set(withoutFixed);
   const normalized = [0, ...withoutFixed];
   base.forEach((index) => {
-    if (index === 0 || index === 11) return;
+    if (index === 0 || index === 13) return;
     if (!used.has(index)) normalized.push(index);
   });
-  normalized.push(11);
+  normalized.push(13);
   return normalized;
 };
 
@@ -91,6 +99,10 @@ const getSortableValue = (member: Member, index: number) => {
       return member.email ?? "";
     case 10:
       return member.phone ?? "";
+    case 11:
+      return member.createdAt ? new Date(member.createdAt).getFullYear().toString() : "";
+    case 12:
+      return "";
     default:
       return "";
   }
@@ -98,6 +110,8 @@ const getSortableValue = (member: Member, index: number) => {
 
 export function MembersList({
   members: list,
+  latestPaymentByMember,
+  memberOptions,
   initialColumnOrder,
   initialColumnWidths,
   initialSortColumn,
@@ -105,6 +119,18 @@ export function MembersList({
   initialSearchQuery,
 }: {
   members: Member[];
+  latestPaymentByMember?: Map<string, {
+    status: string;
+    amount: string;
+    paidAt: Date | null;
+    createdAt: Date;
+  }>;
+  memberOptions?: {
+    statusOptions: string[];
+    genereOptions: string[];
+    materiale2026Options: string[];
+    spedizioneOptions: string[];
+  };
   initialColumnOrder?: number[];
   initialColumnWidths?: number[];
   initialSortColumn?: number | null;
@@ -142,6 +168,52 @@ export function MembersList({
   } | null>(null);
   const dragRef = useRef<number | null>(null);
   const didMountRef = useRef(false);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filters, setFilters] = useState<{
+    status: string | null;
+    genere: string | null;
+    annoIscrizione: number | null;
+    payment: string | null;
+  }>({
+    status: null,
+    genere: null,
+    annoIscrizione: null,
+    payment: null,
+  });
+
+  const getSortableValue = (member: Member, index: number): string => {
+    switch (index) {
+      case 1:
+        return `${member.firstName ?? ""} ${member.lastName ?? ""}`.trim();
+      case 2:
+        return member.tessera ?? "";
+      case 3:
+        return member.codiceFiscale ?? "";
+      case 4:
+        return member.categoria ?? "";
+      case 5:
+        return member.status ?? "";
+      case 6:
+        return member.materiale2026Consegna ?? "";
+      case 7:
+        return member.spedizione ?? "";
+      case 8:
+        return member.genere ?? "";
+      case 9:
+        return member.email ?? "";
+      case 10:
+        return member.phone ?? "";
+      case 11:
+        return member.createdAt ? new Date(member.createdAt).getFullYear().toString() : "";
+      case 12:
+        return latestPaymentByMember?.get(member.id)?.status ?? "";
+      default:
+        return "";
+    }
+  };
 
   useEffect(() => {
     didMountRef.current = true;
@@ -170,32 +242,56 @@ export function MembersList({
 
   const filteredList = useMemo(() => {
     const query = debouncedSearch.trim().toLowerCase();
-    if (!query) return list;
-    return list.filter((member) => {
-      const fields = [
-        member.firstName,
-        member.lastName,
-        member.email,
-        member.phone,
-        member.tessera,
-        member.codiceFiscale,
-        member.categoria,
-        member.status,
-        member.materiale2026Consegna,
-        member.spedizione,
-        member.genere,
-        member.luogoNascita,
-        member.indirizzo,
-        member.cap,
-        member.citta,
-        member.prov,
-        member.notes,
-      ];
-      return fields.some((value) =>
-        (value ?? "").toLowerCase().includes(query)
+    let result = list;
+
+    // Applica search
+    if (query) {
+      result = result.filter((member) => {
+        const fields = [
+          member.firstName,
+          member.lastName,
+          member.email,
+          member.phone,
+          member.tessera,
+          member.codiceFiscale,
+          member.categoria,
+          member.status,
+          member.materiale2026Consegna,
+          member.spedizione,
+          member.genere,
+          member.luogoNascita,
+          member.indirizzo,
+          member.cap,
+          member.citta,
+          member.prov,
+          member.notes,
+        ];
+        return fields.some((value) =>
+          (value ?? "").toLowerCase().includes(query)
+        );
+      });
+    }
+
+    // Applica filtri
+    if (filters.status) {
+      result = result.filter((m) => m.status === filters.status);
+    }
+    if (filters.genere) {
+      result = result.filter((m) => m.genere === filters.genere);
+    }
+    if (filters.annoIscrizione) {
+      result = result.filter((m) =>
+        m.createdAt ? new Date(m.createdAt).getFullYear() === filters.annoIscrizione : false
       );
-    });
-  }, [list, searchTerm]);
+    }
+    if (filters.payment) {
+      result = result.filter((m) =>
+        latestPaymentByMember?.get(m.id)?.status === filters.payment
+      );
+    }
+
+    return result;
+  }, [list, debouncedSearch, filters, latestPaymentByMember]);
 
   const sortedList = useMemo(() => {
     if (sortState.index === null) return filteredList;
@@ -325,9 +421,9 @@ export function MembersList({
     }
   };
 
-  const isDraggableColumn = (index: number) => index !== 0 && index !== 11;
-  const isDroppableColumn = (index: number) => index !== 0 && index !== 11;
-  const isSortableColumn = (index: number) => index >= 1 && index <= 10;
+  const isDraggableColumn = (index: number) => index !== 0 && index !== 13;
+  const isDroppableColumn = (index: number) => index !== 0 && index !== 13;
+  const isSortableColumn = (index: number) => index >= 1 && index <= 12;
 
   if (list.length === 0) {
     return (
@@ -374,6 +470,186 @@ export function MembersList({
         >
           Ripristina colonne
         </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={async () => {
+              const result = await exportMembersAsCSV();
+              if (!result.ok) {
+                alert("Export fallito: " + result.error);
+                return;
+              }
+              const blob = new Blob([result.csv!], { type: "text/csv" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = result.fileName!;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            className="rounded-md px-2 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white"
+          >
+            ↓ Export CSV
+          </button>
+          <button
+            type="button"
+            onClick={() => importInputRef.current?.click()}
+            disabled={isImporting}
+            className="rounded-md px-2 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 disabled:opacity-60 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white"
+          >
+            {isImporting ? "Importando..." : "↑ Import CSV"}
+          </button>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".csv"
+            style={{ display: "none" }}
+            onChange={async (e) => {
+              const file = e.currentTarget.files?.[0];
+              if (!file) return;
+              setIsImporting(true);
+              setImportError(null);
+              try {
+                const content = await file.text();
+                const result = await importMembersFromCSV(content);
+                if (!result.ok) {
+                  setImportError(result.error || "Errore sconosciuto");
+                } else {
+                  alert(
+                    `Importati ${result.imported} iscritti.${result.errors ? " " + result.errors.length + " errori." : ""}`
+                  );
+                  router.refresh();
+                }
+              } catch (err) {
+                setImportError((err as Error).message);
+              } finally {
+                setIsImporting(false);
+                e.currentTarget.value = "";
+              }
+            }}
+          />
+          {importError && (
+            <span className="text-xs text-red-600 dark:text-red-400">{importError}</span>
+          )}
+        </div>
+      </div>
+      {importError && (
+        <span className="text-xs text-red-600 dark:text-red-400">{importError}</span>
+      )}
+      <div className="border-b border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-800/50">
+        <button
+          type="button"
+          onClick={() => setFilterOpen(!filterOpen)}
+          className="text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white"
+        >
+          {filterOpen ? "▼ Filtri" : "▶ Filtri"}
+        </button>
+        {filterOpen && (
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                Status
+              </label>
+              <select
+                value={filters.status || ""}
+                onChange={(e) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    status: e.target.value || null,
+                  }))
+                }
+                className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+              >
+                <option value="">— Tutti —</option>
+                {(memberOptions?.statusOptions || []).map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                Genere
+              </label>
+              <select
+                value={filters.genere || ""}
+                onChange={(e) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    genere: e.target.value || null,
+                  }))
+                }
+                className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+              >
+                <option value="">— Tutti —</option>
+                {(memberOptions?.genereOptions || []).map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                Anno Iscrizione
+              </label>
+              <select
+                value={filters.annoIscrizione || ""}
+                onChange={(e) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    annoIscrizione: e.target.value ? parseInt(e.target.value) : null,
+                  }))
+                }
+                className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+              >
+                <option value="">— Tutti —</option>
+                {Array.from(
+                  new Set(
+                    list
+                      .map((m) => (m.createdAt ? new Date(m.createdAt).getFullYear() : null))
+                      .filter((y) => y !== null)
+                  )
+                )
+                  .sort((a, b) => (b ?? 0) - (a ?? 0))
+                  .map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                Pagamento
+              </label>
+              <select
+                value={filters.payment || ""}
+                onChange={(e) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    payment: e.target.value || null,
+                  }))
+                }
+                className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+              >
+                <option value="">— Tutti —</option>
+                {Array.from(
+                  new Set(
+                    Array.from(latestPaymentByMember?.values() ?? [])
+                      .map((p) => p.status)
+                      .filter((s) => s)
+                  )
+                ).map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-[1800px] w-full table-fixed text-left text-sm whitespace-nowrap">
@@ -381,7 +657,7 @@ export function MembersList({
           <tr className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50">
             {columnOrder.map((colIndex) => {
               const label = COLUMN_LABELS[colIndex];
-              const isSticky = colIndex === 11;
+              const isSticky = colIndex === 13;
               const isDraggable = isDraggableColumn(colIndex);
               const isDroppable = isDroppableColumn(colIndex);
               const isSortable = isSortableColumn(colIndex);
@@ -576,9 +852,25 @@ export function MembersList({
                 {m.phone ?? "—"}
               </td>,
               <td
+                key={`anno-iscrizione-${m.id}`}
+                className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
+                style={{ width: colWidths[11] }}
+              >
+                {m.createdAt ? new Date(m.createdAt).getFullYear().toString() : "—"}
+              </td>,
+              <td
+                key={`pagamento-${m.id}`}
+                className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
+                style={{ width: colWidths[12] }}
+              >
+                {latestPaymentByMember?.get(m.id)
+                  ? `${latestPaymentByMember.get(m.id)?.status ?? "—"}`
+                  : "—"}
+              </td>,
+              <td
                 key={`azioni-${m.id}`}
                 className="sticky right-0 z-10 bg-white px-4 py-3 dark:bg-zinc-900"
-                style={{ width: colWidths[11] }}
+                style={{ width: colWidths[13] }}
               >
                 {!isEditing ? (
                   <div className="flex items-center justify-end gap-3">
@@ -649,7 +941,7 @@ export function MembersList({
                 </tr>
                 {isEditing && (
                   <tr>
-                    <td colSpan={11} className="p-0">
+                    <td colSpan={13} className="p-0">
                       <div className="fixed inset-0 z-50">
                         <button
                           type="button"

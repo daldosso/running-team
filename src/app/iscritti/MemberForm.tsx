@@ -3,7 +3,20 @@
 import { useState } from "react";
 import { createMember } from "@/app/actions/members";
 
-export function MemberForm({ className = "" }: { className?: string }) {
+type MemberOptions = {
+  statusOptions: string[];
+  genereOptions: string[];
+  materiale2026Options: string[];
+  spedizioneOptions: string[];
+};
+
+export function MemberForm({
+  memberOptions,
+  className = "",
+}: {
+  memberOptions?: MemberOptions;
+  className?: string;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -160,11 +173,17 @@ export function MemberForm({ className = "" }: { className?: string }) {
               <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                 Genere
               </label>
-              <input
+              <select
                 name="genere"
-                placeholder="UOMO/DONNA"
                 className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
-              />
+              >
+                <option value="">— Seleziona —</option>
+                {memberOptions?.genereOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -172,19 +191,33 @@ export function MemberForm({ className = "" }: { className?: string }) {
               <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                 Status
               </label>
-              <input
+              <select
                 name="status"
                 className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
-              />
+              >
+                <option value="">— Seleziona —</option>
+                {memberOptions?.statusOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                 Materiale 2026 consegnato
               </label>
-              <input
+              <select
                 name="materiale2026Consegna"
                 className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
-              />
+              >
+                <option value="">— Seleziona —</option>
+                {memberOptions?.materiale2026Options.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -192,10 +225,17 @@ export function MemberForm({ className = "" }: { className?: string }) {
               <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                 Spedizione
               </label>
-              <input
+              <select
                 name="spedizione"
                 className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
-              />
+              >
+                <option value="">— Seleziona —</option>
+                {memberOptions?.spedizioneOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
