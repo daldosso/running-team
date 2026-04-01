@@ -195,6 +195,27 @@ export function MembersList({
     filters.status || filters.genere || filters.annoIscrizione || filters.payment
   );
 
+  const readImportFileAsCSV = async (file: File): Promise<string> => {
+    const lowerName = file.name.toLowerCase();
+    if (lowerName.endsWith(".csv")) {
+      return await file.text();
+    }
+
+    if (lowerName.endsWith(".xlsx") || lowerName.endsWith(".xls")) {
+      const XLSX = await import("xlsx");
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: "array" });
+      const firstSheetName = workbook.SheetNames[0];
+      if (!firstSheetName) {
+        throw new Error("Nessun foglio trovato nel file Excel.");
+      }
+      const worksheet = workbook.Sheets[firstSheetName];
+      return XLSX.utils.sheet_to_csv(worksheet);
+    }
+
+    throw new Error("Formato file non supportato. Usa CSV o Excel.");
+  };
+
   const getSortableValue = (member: Member, index: number): string => {
     switch (index) {
       case 1:
@@ -508,12 +529,12 @@ export function MembersList({
             disabled={isImporting}
             className="rounded-md px-2 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 disabled:opacity-60 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white"
           >
-            {isImporting ? "Importando..." : "↑ Import CSV"}
+            {isImporting ? "Importando..." : "↑ Import CSV/XLSX"}
           </button>
           <input
             ref={importInputRef}
             type="file"
-            accept=".csv"
+            accept=".csv,.xlsx,.xls"
             style={{ display: "none" }}
             onChange={async (e) => {
               const file = e.currentTarget.files?.[0];
@@ -521,7 +542,7 @@ export function MembersList({
               setIsImporting(true);
               setImportError(null);
               try {
-                const content = await file.text();
+                const content = await readImportFileAsCSV(file);
                 const result = await importMembersFromCSV(content);
                 if (!result.ok) {
                   setImportError(result.error || "Errore sconosciuto");
@@ -1478,4 +1499,3 @@ export function MembersList({
     </div>
   );
 }
-

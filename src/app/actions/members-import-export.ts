@@ -102,30 +102,104 @@ export async function importMembersFromCSV(csvContent: string) {
   const lines = csvContent.trim().split("\n");
   if (lines.length < 2) return { ok: false, error: "CSV vuoto o non valido" };
 
-  const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
-  const nameIndex = headers.findIndex((h) => h.includes("nome") && !h.includes("cognome"));
-  const lastNameIndex = headers.findIndex((h) => h.includes("cognome"));
-  const emailIndex = headers.findIndex((h) => h.includes("email"));
+  const normalizeHeader = (value: string) =>
+    value
+      .replace(/^\ufeff/, "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
 
-  if (nameIndex === -1 || lastNameIndex === -1 || emailIndex === -1) {
-    return { ok: false, error: "CSV mancante di colonne richieste: Nome, Cognome, Email" };
+  const detectDelimiter = (headerLine: string) => {
+    const sample = headerLine.replace(/^\ufeff/, "");
+    const counts = new Map<string, number>([
+      [",", (sample.match(/,/g) || []).length],
+      [";", (sample.match(/;/g) || []).length],
+      ["\t", (sample.match(/\t/g) || []).length],
+      ["|", (sample.match(/\|/g) || []).length],
+    ]);
+    let best: { delim: string; count: number } | null = null;
+    for (const [delim, count] of counts) {
+      if (!best || count > best.count) best = { delim, count };
+    }
+    return best && best.count > 0 ? best.delim : ",";
+  };
+
+  const parseCSVLine = (line: string, delimiter: string) => {
+    const result: string[] = [];
+    let current = "";
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+        continue;
+      }
+      if (char === delimiter && !inQuotes) {
+        result.push(current);
+        current = "";
+        continue;
+      }
+      current += char;
+    }
+    result.push(current);
+    return result.map((value) => value.replace(/\r$/, ""));
+  };
+
+  const delimiter = detectDelimiter(lines[0]);
+  const rawHeaders = parseCSVLine(lines[0], delimiter);
+  const headers = rawHeaders.map((h) => normalizeHeader(h));
+
+  const matchesAlias = (value: string, alias: string) => {
+    if (!value) return false;
+    if (alias.includes(" ")) return value.includes(alias);
+    if (alias.length <= 3) return value.split(" ").includes(alias);
+    return value.includes(alias);
+  };
+
+  const findHeaderIndex = (aliases: string[]) =>
+    headers.findIndex((header) =>
+      aliases.some((alias) => matchesAlias(header, alias))
+    );
+
+  const nameIndex = findHeaderIndex(["nome"]);
+  const lastNameIndex = findHeaderIndex(["cognome"]);
+  const emailIndex = findHeaderIndex(["email", "e mail", "mail"]);
+
+  if (nameIndex === -1 || lastNameIndex === -1) {
+    return { ok: false, error: "CSV mancante di colonne richieste: Nome, Cognome" };
   }
 
-  const phoneIndex = headers.findIndex((h) => h.includes("telefono"));
-  const tesseraIndex = headers.findIndex((h) => h.includes("tessera"));
-  const cfIndex = headers.findIndex((h) => h.includes("codice") || h.includes("fiscale"));
-  const categoriaIndex = headers.findIndex((h) => h.includes("categoria"));
-  const statusIndex = headers.findIndex((h) => h.includes("status"));
-  const genereIndex = headers.findIndex((h) => h.includes("genere"));
-  const materialeIndex = headers.findIndex((h) => h.includes("materiale"));
-  const spedizioneIndex = headers.findIndex((h) => h.includes("spedizione"));
-  const indirizzoIndex = headers.findIndex((h) => h.includes("indirizzo"));
-  const capIndex = headers.findIndex((h) => h.includes("cap"));
-  const cittaIndex = headers.findIndex((h) => h.includes("città"));
-  const provIndex = headers.findIndex((h) => h.includes("provincia") || h.includes("prov"));
-  const luogoIndex = headers.findIndex((h) => h.includes("luogo"));
-  const birthIndex = headers.findIndex((h) => h.includes("nascita"));
-  const notesIndex = headers.findIndex((h) => h.includes("note"));
+  const phoneIndex = findHeaderIndex(["telefono", "cellulare", "cell"]);
+  const tesseraIndex = findHeaderIndex(["tessera"]);
+  const cfIndex = findHeaderIndex(["codice fiscale", "codicefiscale", "cf"]);
+  const categoriaIndex = findHeaderIndex(["categoria", "cat"]);
+  const statusIndex = findHeaderIndex(["status", "stato"]);
+  const genereIndex = findHeaderIndex(["genere", "sesso"]);
+  const materialeIndex = findHeaderIndex(["materiale 2026", "materiale"]);
+  const spedizioneIndex = findHeaderIndex(["spedizione"]);
+  const indirizzoIndex = findHeaderIndex(["indirizzo", "via"]);
+  const capIndex = findHeaderIndex(["cap"]);
+  const cittaIndex = findHeaderIndex(["citta", "citta"]);
+  const provIndex = findHeaderIndex(["provincia", "prov"]);
+  const luogoIndex = findHeaderIndex(["luogo nascita"]);
+  const birthIndex = findHeaderIndex(["data nascita", "data di nascita"]);
+  const notesIndex = findHeaderIndex(["note", "annotazioni"]);
+  const stranieroIndex = findHeaderIndex(["straniero"]);
+  const tagliaMagliaCotoneIndex = findHeaderIndex(["taglia maglia cotone", "maglia cotone"]);
+  const tagliaMagliaSolarIndex = findHeaderIndex(["taglia maglia solar", "maglia solar"]);
+  const tagliaMagliaPulsarIndex = findHeaderIndex(["taglia maglia pulsar", "maglia pulsar"]);
+  const tagliaCanottaSolarIndex = findHeaderIndex(["taglia canotta solar", "canotta solar"]);
+  const tagliaCanottaPulsarIndex = findHeaderIndex(["taglia canotta pulsar", "canotta pulsar"]);
+  const tagliaFelpaSolarIndex = findHeaderIndex(["taglia felpa solar", "felpa solar"]);
+  const tagliaFelpaPulsarIndex = findHeaderIndex(["taglia felpa pulsar", "felpa pulsar"]);
 
   const imported = [];
   const errors = [];
@@ -134,32 +208,49 @@ export async function importMembersFromCSV(csvContent: string) {
     const line = lines[i].trim();
     if (!line) continue;
 
-    const parts = line.match(/("(?:[^"]|"")*"|[^,]*)/g) || [];
+    const parts = parseCSVLine(line, delimiter);
     const getField = (index: number) => {
       if (index === -1) return null;
-      const val = parts[index]?.replace(/^"|"$/g, "").replace(/""/g, '"') ?? "";
-      return val.trim().length > 0 ? val.trim() : null;
+      const val = parts[index] ?? "";
+      const trimmed = val.trim();
+      return trimmed.length > 0 ? trimmed : null;
     };
 
     const firstName = getField(nameIndex);
     const lastName = getField(lastNameIndex);
-    const email = getField(emailIndex);
+    const rawEmail = getField(emailIndex);
 
-    if (!firstName || !lastName || !email) {
-      errors.push(`Riga ${i + 1}: mancano Nome, Cognome o Email`);
+    if (!firstName || !lastName) {
+      errors.push(`Riga ${i + 1}: mancano Nome o Cognome`);
       continue;
     }
 
     try {
+      const baseEmail = rawEmail && rawEmail.trim().length > 0
+        ? rawEmail
+        : [firstName, lastName].filter(Boolean).join(".");
+      const safeLocal = baseEmail
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, ".")
+        .replace(/^\.+|\.+$/g, "")
+        .replace(/\.+/g, ".");
+      const tessera = getField(tesseraIndex);
+      const email = (rawEmail ?? "").trim()
+        ? (rawEmail as string).toLowerCase()
+        : `${safeLocal || "member"}.${tessera ?? i + 1}@no-email.local`;
+
       await db.insert(members).values({
         organizationId: orgId,
         firstName,
         lastName,
-        email: email.toLowerCase(),
+        email,
         phone: getField(phoneIndex) ?? null,
-        tessera: getField(tesseraIndex) ?? null,
+        tessera: tessera ?? null,
         codiceFiscale: getField(cfIndex) ?? null,
         categoria: getField(categoriaIndex) ?? null,
+        straniero: getField(stranieroIndex) ?? null,
         status: getField(statusIndex) ?? null,
         genere: getField(genereIndex) ?? null,
         materiale2026Consegna: getField(materialeIndex) ?? null,
@@ -170,6 +261,13 @@ export async function importMembersFromCSV(csvContent: string) {
         prov: getField(provIndex) ?? null,
         luogoNascita: getField(luogoIndex) ?? null,
         birthDate: getField(birthIndex) ?? null,
+        tagliaMagliaCotone: getField(tagliaMagliaCotoneIndex) ?? null,
+        tagliaMagliaSolar: getField(tagliaMagliaSolarIndex) ?? null,
+        tagliaMagliaPulsar: getField(tagliaMagliaPulsarIndex) ?? null,
+        tagliaCanottaSolar: getField(tagliaCanottaSolarIndex) ?? null,
+        tagliaCanottaPulsar: getField(tagliaCanottaPulsarIndex) ?? null,
+        tagliaFelpaSolar: getField(tagliaFelpaSolarIndex) ?? null,
+        tagliaFelpaPulsar: getField(tagliaFelpaPulsarIndex) ?? null,
         notes: getField(notesIndex) ?? null,
       });
       imported.push(firstName + " " + lastName);
