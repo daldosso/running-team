@@ -191,6 +191,9 @@ export function MembersList({
     annoIscrizione: null,
     payment: null,
   });
+  const hasActiveFilters = Boolean(
+    filters.status || filters.genere || filters.annoIscrizione || filters.payment
+  );
 
   const getSortableValue = (member: Member, index: number): string => {
     switch (index) {
@@ -552,8 +555,26 @@ export function MembersList({
         >
           {filterOpen ? "▼ Filtri" : "▶ Filtri"}
         </button>
-        {filterOpen && (
-          <div className="mt-3 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+      {filterOpen && (
+          <div className="mt-3 space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  setFilters({
+                    status: null,
+                    genere: null,
+                    annoIscrizione: null,
+                    payment: null,
+                  })
+                }
+                disabled={!hasActiveFilters}
+                className="rounded-md border border-zinc-200 px-2 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white"
+              >
+                Pulisci filtri
+              </button>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
             <div>
               <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
                 Status
@@ -655,6 +676,7 @@ export function MembersList({
                   </option>
                 ))}
               </select>
+            </div>
             </div>
           </div>
         )}
@@ -1456,5 +1478,4 @@ export function MembersList({
     </div>
   );
 }
-
 
