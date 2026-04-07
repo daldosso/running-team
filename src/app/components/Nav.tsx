@@ -70,16 +70,15 @@ export function Nav() {
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4">
         <Link
           href="/"
-          className="flex items-center gap-2 text-base font-semibold text-zinc-900 dark:text-white"
+          className="flex items-center text-base font-semibold text-zinc-900 dark:text-white"
         >
           <Image
             src={logoSrc}
             alt={brandName}
             width={48}
             height={48}
-            className="h-12 w-12 object-contain"
+            className="h-14 w-14 object-contain sm:h-12 sm:w-12"
           />
-          {brandName}
         </Link>
         <div className="flex flex-1 items-center gap-2">
           {isAdmin && (
@@ -115,7 +114,7 @@ export function Nav() {
               className={navItemClass("/pagamenti")}
               aria-current={isActive("/pagamenti") ? "page" : undefined}
             >
-              {isRunner ? "I miei pagamenti" : "Pagamenti"}
+              {isRunner ? "Profilo" : "Pagamenti"}
             </Link>
           )}
           <Link

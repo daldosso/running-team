@@ -3,6 +3,7 @@ import { members, users } from "@/lib/db/schema";
 import { getOrganizationId } from "@/lib/org-context";
 import { asc, eq } from "drizzle-orm";
 import { linkUserToMember } from "@/app/actions/users";
+import NewUserForm from "@/app/utenze/NewUserForm";
 
 export const dynamic = "force-dynamic";
 
@@ -40,8 +41,9 @@ export default async function UtenzePage() {
     .orderBy(asc(members.lastName));
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-bold tracking-tight">Users</h1>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold tracking-tight">Users</h1>
+      <NewUserForm />
       {list.length === 0 ? (
         <p className="rounded-xl border border-dashed border-zinc-300 py-8 text-center text-zinc-500 dark:border-zinc-600">
           Nessuna utenza trovata.

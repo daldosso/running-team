@@ -6,6 +6,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { PaymentForm } from "./PaymentForm";
 import { PaymentsList } from "./PaymentsList";
 import { RunnerProfileCard } from "./RunnerProfileCard";
+import ChangePasswordForm from "./ChangePasswordForm";
 
 export const dynamic = "force-dynamic";
 
@@ -107,7 +108,9 @@ export default async function PagamentiPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold tracking-tight">Pagamenti</h1>
+      <h1 className="mb-6 text-2xl font-bold tracking-tight">
+        {canManage ? "Pagamenti" : "Profilo"}
+      </h1>
       {canManage ? (
         <PaymentForm members={membersList} className="mb-8" />
       ) : null}
@@ -123,6 +126,9 @@ export default async function PagamentiPage() {
               photoUrl: runnerProfile.photoUrl ?? null,
             }}
           />
+          <div className="mt-6">
+            <ChangePasswordForm />
+          </div>
         </div>
       ) : null}
       <PaymentsList payments={paymentsList} members={membersList} canManage={canManage} />
