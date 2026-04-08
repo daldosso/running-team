@@ -456,14 +456,7 @@ export function MembersList({
   const isDraggableColumn = (index: number) => index !== 0 && index !== 13;
   const isDroppableColumn = (index: number) => index !== 0 && index !== 13;
   const isSortableColumn = (index: number) => index >= 1 && index <= 12;
-
-  if (list.length === 0) {
-    return (
-      <p className="rounded-xl border border-dashed border-zinc-300 py-8 text-center text-zinc-500 dark:border-zinc-600">
-        Nessun iscritto. Aggiungi il primo con &quot;+ Nuovo iscritto&quot;.
-      </p>
-    );
-  }
+  const isEmpty = list.length === 0;
 
   return (
     <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -568,35 +561,41 @@ export function MembersList({
       {importError && (
         <span className="text-xs text-red-600 dark:text-red-400">{importError}</span>
       )}
-      <div className="border-b border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-800/50">
-        <button
-          type="button"
-          onClick={() => setFilterOpen(!filterOpen)}
-          className="text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white"
-        >
-          {filterOpen ? "▼ Filtri" : "▶ Filtri"}
-        </button>
-      {filterOpen && (
-          <div className="mt-3 space-y-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() =>
-                  setFilters({
-                    status: null,
-                    genere: null,
-                    annoIscrizione: null,
-                    payment: null,
-                  })
-                }
-                disabled={!hasActiveFilters}
-                className="rounded-md border border-zinc-200 px-2 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white"
-              >
-                Pulisci filtri
-              </button>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
-            <div>
+      {isEmpty ? (
+        <p className="rounded-xl border border-dashed border-zinc-300 py-8 text-center text-zinc-500 dark:border-zinc-600">
+          Nessun iscritto. Aggiungi il primo con &quot;+ Nuovo iscritto&quot; oppure importa un file.
+        </p>
+      ) : (
+        <>
+          <div className="border-b border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-800/50">
+            <button
+              type="button"
+              onClick={() => setFilterOpen(!filterOpen)}
+              className="text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white"
+            >
+              {filterOpen ? "▼ Filtri" : "▶ Filtri"}
+            </button>
+            {filterOpen && (
+              <div className="mt-3 space-y-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFilters({
+                        status: null,
+                        genere: null,
+                        annoIscrizione: null,
+                        payment: null,
+                      })
+                    }
+                    disabled={!hasActiveFilters}
+                    className="rounded-md border border-zinc-200 px-2 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white"
+                  >
+                    Pulisci filtri
+                  </button>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+                  <div>
               <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
                 Status
               </label>
@@ -1496,6 +1495,8 @@ export function MembersList({
         </tbody>
       </table>
       </div>
+        </>
+      )}
     </div>
   );
 }
