@@ -90,6 +90,53 @@ export default async function GarePage() {
     return match ? match[1] : null;
   };
 
+  const pastelTiles = [
+    {
+      container:
+        "border-rose-300/40 bg-gradient-to-br from-rose-500/20 via-zinc-900/0 to-zinc-900/0 bg-zinc-900/80",
+      bar: "bg-rose-300",
+      badge: "border-rose-300/40 bg-rose-500/15 text-rose-100",
+    },
+    {
+      container:
+        "border-amber-300/40 bg-gradient-to-br from-amber-500/20 via-zinc-900/0 to-zinc-900/0 bg-zinc-900/80",
+      bar: "bg-amber-300",
+      badge: "border-amber-300/40 bg-amber-500/15 text-amber-100",
+    },
+    {
+      container:
+        "border-emerald-300/40 bg-gradient-to-br from-emerald-500/20 via-zinc-900/0 to-zinc-900/0 bg-zinc-900/80",
+      bar: "bg-emerald-300",
+      badge: "border-emerald-300/40 bg-emerald-500/15 text-emerald-100",
+    },
+    {
+      container:
+        "border-sky-300/40 bg-gradient-to-br from-sky-500/20 via-zinc-900/0 to-zinc-900/0 bg-zinc-900/80",
+      bar: "bg-sky-300",
+      badge: "border-sky-300/40 bg-sky-500/15 text-sky-100",
+    },
+    {
+      container:
+        "border-violet-300/40 bg-gradient-to-br from-violet-500/20 via-zinc-900/0 to-zinc-900/0 bg-zinc-900/80",
+      bar: "bg-violet-300",
+      badge: "border-violet-300/40 bg-violet-500/15 text-violet-100",
+    },
+    {
+      container:
+        "border-teal-300/40 bg-gradient-to-br from-teal-500/20 via-zinc-900/0 to-zinc-900/0 bg-zinc-900/80",
+      bar: "bg-teal-300",
+      badge: "border-teal-300/40 bg-teal-500/15 text-teal-100",
+    },
+  ];
+
+  const tileClass = (seed: string) => {
+    let hash = 0;
+    for (let i = 0; i < seed.length; i += 1) {
+      hash = (hash * 31 + seed.charCodeAt(i)) % pastelTiles.length;
+    }
+    return pastelTiles[hash];
+  };
+
   return (
     <div className="space-y-6">
       {isRunner ? (
@@ -134,17 +181,28 @@ export default async function GarePage() {
             {latestEvents.length === 0 ? (
               <p className="text-sm text-zinc-500">Nessun evento disponibile.</p>
             ) : (
-              <ul className="space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
+              <ul className="space-y-2 text-sm">
                 {latestEvents.map((eventItem) => (
-                  <li key={eventItem.id} className="rounded-lg border border-zinc-100 px-3 py-2 dark:border-zinc-800">
+                  (() => {
+                    const tile = tileClass(`${eventItem.title}-${eventItem.date}`);
+                    return (
+                  <li
+                    key={eventItem.id}
+                    className={`relative overflow-hidden rounded-lg border px-3 py-2 ${tile.container}`}
+                  >
+                    <span className={`pointer-events-none absolute inset-y-0 left-0 w-1 ${tile.bar}`} />
                     <div className="flex flex-col gap-1">
-                      <div className="font-medium leading-snug">{eventItem.title}</div>
-                      <div className="text-xs text-zinc-500">
+                      <div className="font-semibold leading-snug text-white">
+                        {eventItem.title}
+                      </div>
+                      <div className="text-xs text-zinc-300">
                         {eventItem.date}
                         {eventItem.time ? ` · ${eventItem.time}` : ""}
                       </div>
                     </div>
                   </li>
+                    );
+                  })()
                 ))}
               </ul>
             )}
@@ -160,16 +218,27 @@ export default async function GarePage() {
             {latestRaces.length === 0 ? (
               <p className="text-sm text-zinc-500">Nessuna gara disponibile.</p>
             ) : (
-              <ul className="space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
+              <ul className="space-y-2 text-sm">
                 {latestRaces.map((race) => (
-                  <li key={race.id} className="rounded-lg border border-zinc-100 px-3 py-2 dark:border-zinc-800">
+                  (() => {
+                    const tile = tileClass(`${race.name}-${race.location}`);
+                    return (
+                  <li
+                    key={race.id}
+                    className={`relative overflow-hidden rounded-lg border px-3 py-2 ${tile.container}`}
+                  >
+                    <span className={`pointer-events-none absolute inset-y-0 left-0 w-1 ${tile.bar}`} />
                     <div className="flex flex-col gap-1">
-                      <div className="font-medium leading-snug">{race.name}</div>
-                      <div className="text-xs text-zinc-500">
+                      <div className="font-semibold leading-snug text-white">
+                        {race.name}
+                      </div>
+                      <div className="text-xs text-zinc-300">
                         {race.raceDate} · {race.location}
                       </div>
                     </div>
                   </li>
+                    );
+                  })()
                 ))}
               </ul>
             )}
@@ -185,19 +254,28 @@ export default async function GarePage() {
             {discountEvents.length === 0 ? (
               <p className="text-sm text-zinc-500">Nessuno sconto disponibile.</p>
             ) : (
-              <ul className="space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
+              <ul className="space-y-2 text-sm">
                 {discountEvents.map((eventItem) => {
                   const code =
                     extractDiscountCode(eventItem.description) ||
                     extractDiscountCode(eventItem.title);
+                  const tile = tileClass(`${eventItem.title}-${code ?? ""}`);
                   return (
-                    <li key={eventItem.id} className="rounded-lg border border-zinc-100 px-3 py-2 dark:border-zinc-800">
+                    <li
+                      key={eventItem.id}
+                      className={`relative overflow-hidden rounded-lg border px-3 py-2 ${tile.container}`}
+                    >
+                      <span className={`pointer-events-none absolute inset-y-0 left-0 w-1 ${tile.bar}`} />
                       <div className="flex flex-col gap-1">
-                        <div className="font-medium leading-snug">{eventItem.title}</div>
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+                        <div className="font-semibold leading-snug text-white">
+                          {eventItem.title}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-300">
                           <span>{eventItem.date}</span>
                           {code ? (
-                            <span className="rounded-full border border-zinc-200 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-700 dark:border-zinc-700 dark:text-zinc-200">
+                            <span
+                              className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${tile.badge}`}
+                            >
                               {code}
                             </span>
                           ) : null}
