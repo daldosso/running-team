@@ -212,7 +212,10 @@ export default async function GarePage() {
           <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-5">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-base font-semibold sm:text-lg">Ultime gare</h2>
-              <Link href="/gare" className="text-xs text-zinc-500 hover:text-zinc-700 sm:text-sm">
+              <Link
+                href="/gare"
+                className="inline-flex items-center rounded-full border border-sky-300/40 bg-sky-500/10 px-3 py-1 text-xs font-semibold text-sky-200 shadow-[0_8px_18px_rgba(14,116,144,0.25)] backdrop-blur transition hover:border-sky-300/70 hover:bg-sky-500/20 hover:text-white sm:text-sm"
+              >
                 Tutte
               </Link>
             </div>
