@@ -5,6 +5,7 @@ import { events, members, races, users } from "@/lib/db/schema";
 import { and, desc, eq, ilike, or } from "drizzle-orm";
 import Link from "next/link";
 import { RacesList } from "./RacesList";
+import { RaceForm } from "./RaceForm";
 
 export const dynamic = "force-dynamic";
 
@@ -287,6 +288,18 @@ export default async function GarePage() {
               </ul>
             )}
           </div>
+        </div>
+      ) : null}
+
+      {isRunner || canManage ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold">Aggiungi una gara</h2>
+            <p className="text-sm text-zinc-500">
+              Inserisci una gara e sarà visibile a tutta la squadra.
+            </p>
+          </div>
+          <RaceForm />
         </div>
       ) : null}
 
