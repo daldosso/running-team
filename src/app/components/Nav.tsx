@@ -43,7 +43,12 @@ export function Nav() {
 
   const isAdmin = role === "owner" || role === "admin";
   const isRunner = role === "runner";
-  const isRunFast = orgSlug === "run-fast";
+  const normalizedSlug = orgSlug
+    ? orgSlug.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
+    : "";
+  const isRunFast =
+    normalizedSlug === "run-fast" ||
+    (orgName ? orgName.toLowerCase().includes("run fast") : false);
   const brandName = orgName ?? (isRunFast ? "Run Fast" : "Running Team");
   const logoSrc = isRunFast
     ? "/Logo-Run-Fast-White.png"
