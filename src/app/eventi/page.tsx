@@ -31,7 +31,7 @@ export default async function EventiPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold tracking-tight">Eventi</h1>
+      <h1 className="mb-6 text-2xl font-bold tracking-tight">Informazioni</h1>
 
       <EventForm races={raceList} className="mb-8" />
 
@@ -39,4 +39,3 @@ export default async function EventiPage() {
     </div>
   );
 }
-

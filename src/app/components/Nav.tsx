@@ -141,7 +141,7 @@ export function Nav() {
             className={navItemClass("/eventi")}
             aria-current={isActive("/eventi") ? "page" : undefined}
           >
-            Eventi
+            Informazioni
           </Link>
           <div className="flex-1" />
           <LogoutButton />
