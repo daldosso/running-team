@@ -77,7 +77,7 @@ export function Nav() {
             alt={brandName}
             width={48}
             height={48}
-            className="h-14 w-14 object-contain sm:h-12 sm:w-12"
+            className="h-16 w-16 object-contain sm:h-14 sm:w-14 dark:invert dark:brightness-200"
           />
         </Link>
         <div className="flex flex-1 items-center gap-2">
