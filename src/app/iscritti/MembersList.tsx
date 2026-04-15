@@ -4,7 +4,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2, Edit2 } from "lucide-react";
 import type { Member } from "@/lib/db/schema";
-import { deleteMember, updateMember } from "@/app/actions/members";
+import { deleteMember, deleteMembers, updateMember } from "@/app/actions/members";
 import {
   clearTablePreferences,
   saveTablePreferences,
@@ -32,7 +32,7 @@ const COLUMN_LABELS = [
 ];
 
 const DEFAULT_COLUMN_WIDTHS = [
-  64, // Avatar
+  112, // Selezione + Avatar
   200, // Nome
   110, // Tessera
   190, // Codice Fiscale
@@ -78,7 +78,19 @@ const normalizeColumnWidths = (widths?: number[]) => {
   return next;
 };
 
-const getSortableValue = (member: Member, index: number) => {
+const getSortableValue = (
+  member: Member,
+  index: number,
+  latestPaymentByMember?: Map<
+    string,
+    {
+      status: string;
+      amount: string;
+      paidAt: Date | null;
+      createdAt: Date;
+    }
+  >
+) => {
   switch (index) {
     case 1:
       return `${member.firstName ?? ""} ${member.lastName ?? ""}`.trim();
@@ -103,7 +115,7 @@ const getSortableValue = (member: Member, index: number) => {
     case 11:
       return member.createdAt ? new Date(member.createdAt).getFullYear().toString() : "";
     case 12:
-      return "";
+      return latestPaymentByMember?.get(member.id)?.status ?? "";
     default:
       return "";
   }
@@ -180,6 +192,8 @@ export function MembersList({
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isDeletingSelected, setIsDeletingSelected] = useState(false);
   const [filters, setFilters] = useState<{
     status: string | null;
     genere: string | null;
@@ -214,37 +228,6 @@ export function MembersList({
     }
 
     throw new Error("Formato file non supportato. Usa CSV o Excel.");
-  };
-
-  const getSortableValue = (member: Member, index: number): string => {
-    switch (index) {
-      case 1:
-        return `${member.firstName ?? ""} ${member.lastName ?? ""}`.trim();
-      case 2:
-        return member.tessera ?? "";
-      case 3:
-        return member.codiceFiscale ?? "";
-      case 4:
-        return member.categoria ?? "";
-      case 5:
-        return member.status ?? "";
-      case 6:
-        return member.materiale2026Consegna ?? "";
-      case 7:
-        return member.spedizione ?? "";
-      case 8:
-        return member.genere ?? "";
-      case 9:
-        return member.email ?? "";
-      case 10:
-        return member.phone ?? "";
-      case 11:
-        return member.createdAt ? new Date(member.createdAt).getFullYear().toString() : "";
-      case 12:
-        return latestPaymentByMember?.get(member.id)?.status ?? "";
-      default:
-        return "";
-    }
   };
 
   useEffect(() => {
@@ -331,12 +314,25 @@ export function MembersList({
     const next = [...filteredList];
     const direction = sortState.direction === "asc" ? 1 : -1;
     next.sort((a, b) => {
-      const valueA = getSortableValue(a, sortIndex);
-      const valueB = getSortableValue(b, sortIndex);
+      const valueA = getSortableValue(a, sortIndex, latestPaymentByMember);
+      const valueB = getSortableValue(b, sortIndex, latestPaymentByMember);
       return valueA.localeCompare(valueB, "it", { sensitivity: "base" }) * direction;
     });
     return next;
-  }, [filteredList, sortState]);
+  }, [filteredList, latestPaymentByMember, sortState]);
+
+  const visibleMemberIds = useMemo(
+    () => filteredList.map((member) => member.id),
+    [filteredList]
+  );
+
+  const selectedVisibleCount = useMemo(
+    () => visibleMemberIds.filter((id) => selectedIds.includes(id)).length,
+    [visibleMemberIds, selectedIds]
+  );
+
+  const allVisibleSelected =
+    visibleMemberIds.length > 0 && selectedVisibleCount === visibleMemberIds.length;
 
   useEffect(() => {
     const handleMove = (event: MouseEvent) => {
@@ -383,6 +379,10 @@ export function MembersList({
     setPhotoPreview(current?.photoUrl ? `/api/members/photo/${current.id}` : null);
     setPhotoError(null);
   }, [editingId, list]);
+
+  useEffect(() => {
+    setSelectedIds((prev) => prev.filter((id) => list.some((member) => member.id === id)));
+  }, [list]);
 
   const uploadMemberPhoto = async (memberId: string, file: File) => {
     setPhotoUploading(true);
@@ -457,6 +457,49 @@ export function MembersList({
   const isDroppableColumn = (index: number) => index !== 0 && index !== 13;
   const isSortableColumn = (index: number) => index >= 1 && index <= 12;
   const isEmpty = list.length === 0;
+
+  const toggleMemberSelection = (memberId: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(memberId)
+        ? prev.filter((id) => id !== memberId)
+        : [...prev, memberId]
+    );
+  };
+
+  const toggleVisibleSelection = () => {
+    setSelectedIds((prev) => {
+      if (allVisibleSelected) {
+        return prev.filter((id) => !visibleMemberIds.includes(id));
+      }
+
+      return Array.from(new Set([...prev, ...visibleMemberIds]));
+    });
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedIds.length === 0 || isDeletingSelected) return;
+    const count = selectedIds.length;
+    const confirmed = confirm(
+      `Eliminare ${count} ${count === 1 ? "iscritto selezionato" : "iscritti selezionati"}?`
+    );
+    if (!confirmed) return;
+
+    setIsDeletingSelected(true);
+    try {
+      const result = await deleteMembers(selectedIds);
+      if (!result.ok) {
+        alert(result.error || "Eliminazione multipla fallita");
+        return;
+      }
+      if (editingId && selectedIds.includes(editingId)) {
+        setEditingId(null);
+      }
+      setSelectedIds([]);
+      router.refresh();
+    } finally {
+      setIsDeletingSelected(false);
+    }
+  };
 
   return (
     <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -567,6 +610,38 @@ export function MembersList({
         </p>
       ) : (
         <>
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-50 px-3 py-2 text-xs dark:border-zinc-800 dark:bg-zinc-800/40">
+            <div className="text-zinc-500 dark:text-zinc-400">
+              {selectedIds.length > 0
+                ? `${selectedIds.length} selezionati`
+                : "Seleziona più iscritti per eliminarli in blocco"}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={toggleVisibleSelection}
+                className="rounded-md px-2 py-1 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white"
+              >
+                {allVisibleSelected ? "Deseleziona visibili" : "Seleziona visibili"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedIds([])}
+                disabled={selectedIds.length === 0 || isDeletingSelected}
+                className="rounded-md px-2 py-1 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-60 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white"
+              >
+                Pulisci selezione
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteSelected}
+                disabled={selectedIds.length === 0 || isDeletingSelected}
+                className="rounded-md bg-red-600 px-2 py-1 font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-red-700 dark:hover:bg-red-600"
+              >
+                {isDeletingSelected ? "Elimino..." : "Elimina selezionati"}
+              </button>
+            </div>
+          </div>
           <div className="border-b border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-800/50">
             <button
               type="button"
@@ -713,6 +788,7 @@ export function MembersList({
               const isSortable = isSortableColumn(colIndex);
               const isSorted = sortState.index === colIndex;
               const isDragOver = dragOverIndex === colIndex && isDroppable;
+              const isSelectionColumn = colIndex === 0;
               return (
                 <th
                   key={`col-${colIndex}`}
@@ -760,7 +836,18 @@ export function MembersList({
                     isDragOver ? " ring-2 ring-inset ring-zinc-400/60" : ""
                   }`}
                 >
-                  {isSortable ? (
+                  {isSelectionColumn ? (
+                    <label className="flex items-center gap-2 text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                      <input
+                        type="checkbox"
+                        checked={allVisibleSelected}
+                        onChange={toggleVisibleSelection}
+                        aria-label="Seleziona tutti gli iscritti visibili"
+                        className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-400 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                      />
+                      <span className="select-none">Sel.</span>
+                    </label>
+                  ) : isSortable ? (
                     <button
                       type="button"
                       onClick={() => {
@@ -813,27 +900,36 @@ export function MembersList({
 
             const cells = [
               <td key={`avatar-${m.id}`} className="px-4 py-3" style={{ width: colWidths[0] }}>
-                <button
-                  type="button"
-                  onClick={() => setEditingId(m.id)}
-                  className={`flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-zinc-200 bg-zinc-100 text-[10px] font-semibold text-zinc-500 transition hover:scale-[1.02] hover:shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 ${statusRingClass(
-                    m.status
-                  )}`}
-                  aria-label={`Modifica ${m.firstName} ${m.lastName}`}
-                  title="Modifica iscritto"
-                >
-                  {currentPhoto ? (
-                    <img
-                      src={currentPhoto}
-                      alt={`${m.firstName} ${m.lastName}`}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <span>
-                      {`${m.firstName?.[0] ?? ""}${m.lastName?.[0] ?? ""}`.toUpperCase()}
-                    </span>
-                  )}
-                </button>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(m.id)}
+                    onChange={() => toggleMemberSelection(m.id)}
+                    aria-label={`Seleziona ${m.firstName} ${m.lastName}`}
+                    className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-400 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setEditingId(m.id)}
+                    className={`flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-zinc-200 bg-zinc-100 text-[10px] font-semibold text-zinc-500 transition hover:scale-[1.02] hover:shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 ${statusRingClass(
+                      m.status
+                    )}`}
+                    aria-label={`Modifica ${m.firstName} ${m.lastName}`}
+                    title="Modifica iscritto"
+                  >
+                    {currentPhoto ? (
+                      <img
+                        src={currentPhoto}
+                        alt={`${m.firstName} ${m.lastName}`}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span>
+                        {`${m.firstName?.[0] ?? ""}${m.lastName?.[0] ?? ""}`.toUpperCase()}
+                      </span>
+                    )}
+                  </button>
+                </div>
               </td>,
               <td key={`nome-${m.id}`} className="px-4 py-3" style={{ width: colWidths[1] }}>
                 {m.firstName} {m.lastName}
@@ -966,7 +1062,7 @@ export function MembersList({
                 </tr>
                 {isEditing && (
                   <tr>
-                    <td colSpan={13} className="p-0">
+                    <td colSpan={14} className="p-0">
                       <div className="fixed inset-0 z-50">
                         <button
                           type="button"

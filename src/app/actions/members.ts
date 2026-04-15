@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { members } from "@/lib/db/schema";
 import { getOrganizationId } from "@/lib/org-context";
 import { revalidatePath } from "next/cache";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 
 export type MemberFormData = {
   firstName: string;
@@ -177,4 +177,30 @@ export async function deleteMember(id: string) {
   revalidatePath("/");
   revalidatePath("/iscritti");
   return { ok: true };
+}
+
+export async function deleteMembers(ids: string[]) {
+  const orgId = await getOrganizationId();
+  if (!orgId) return { ok: false, error: "Organizzazione non specificata" };
+
+  const normalizedIds = Array.from(
+    new Set(ids.map((id) => id.trim()).filter((id) => id.length > 0))
+  );
+
+  if (normalizedIds.length === 0) {
+    return { ok: false, error: "Nessun iscritto selezionato" };
+  }
+
+  await db
+    .delete(members)
+    .where(
+      and(
+        eq(members.organizationId, orgId),
+        inArray(members.id, normalizedIds)
+      )
+    );
+
+  revalidatePath("/");
+  revalidatePath("/iscritti");
+  return { ok: true, deleted: normalizedIds.length };
 }
