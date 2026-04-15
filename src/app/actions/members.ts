@@ -62,10 +62,10 @@ export async function createMember(formData: MemberFormData) {
 
   const firstName = normalizeRequired(formData.firstName);
   const lastName = normalizeRequired(formData.lastName);
-  const emailRaw = normalizeRequired(formData.email);
-  const email = emailRaw ? emailRaw.toLowerCase() : emailRaw;
-  if (!firstName || !lastName || !email) {
-    return { ok: false, error: "Nome, cognome ed email sono obbligatori" };
+  const emailRaw = normalizeOptional(formData.email);
+  const email = emailRaw?.toLowerCase() ?? "";
+  if (!firstName || !lastName) {
+    return { ok: false, error: "Nome e cognome sono obbligatori" };
   }
 
   await db.insert(members).values({
@@ -114,11 +114,11 @@ export async function updateMember(id: string, formData: MemberFormData) {
 
   const nextFirstName = normalizeRequired(formData.firstName);
   const nextLastName = normalizeRequired(formData.lastName);
-  const nextEmailRaw = normalizeRequired(formData.email);
-  const nextEmail = nextEmailRaw ? nextEmailRaw.toLowerCase() : nextEmailRaw;
+  const nextEmailRaw = normalizeOptional(formData.email);
+  const nextEmail = nextEmailRaw?.toLowerCase() ?? "";
 
-  if (nextFirstName === null || nextLastName === null || nextEmail === null) {
-    return { ok: false, error: "Nome, cognome ed email sono obbligatori" };
+  if (nextFirstName === null || nextLastName === null) {
+    return { ok: false, error: "Nome e cognome sono obbligatori" };
   }
 
   await db
@@ -126,7 +126,7 @@ export async function updateMember(id: string, formData: MemberFormData) {
     .set({
       firstName: nextFirstName ?? current.firstName,
       lastName: nextLastName ?? current.lastName,
-      email: nextEmail ?? current.email,
+      email: nextEmail,
       phone: normalizeOptional(formData.phone) ?? current.phone,
       birthDate: formData.birthDate ?? current.birthDate,
       tessera: normalizeOptional(formData.tessera) ?? current.tessera,

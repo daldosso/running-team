@@ -112,6 +112,40 @@ export async function importMembersFromCSV(csvContent: string) {
       .replace(/[^a-z0-9]+/g, " ")
       .trim();
 
+  const normalizeDate = (value: string | null) => {
+    if (!value) return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+
+    const slashMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+    if (!slashMatch) return trimmed;
+
+    const month = Number(slashMatch[1]);
+    const day = Number(slashMatch[2]);
+    let year = Number(slashMatch[3]);
+
+    if (year < 100) {
+      year += year >= 30 ? 1900 : 2000;
+    }
+
+    if (
+      !Number.isInteger(day) ||
+      !Number.isInteger(month) ||
+      !Number.isInteger(year) ||
+      day < 1 ||
+      day > 31 ||
+      month < 1 ||
+      month > 12
+    ) {
+      return trimmed;
+    }
+
+    return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(
+      day
+    ).padStart(2, "0")}`;
+  };
+
   const detectDelimiter = (headerLine: string) => {
     const sample = headerLine.replace(/^\ufeff/, "");
     const counts = new Map<string, number>([
@@ -159,8 +193,15 @@ export async function importMembersFromCSV(csvContent: string) {
 
   const matchesAlias = (value: string, alias: string) => {
     if (!value) return false;
-    if (alias.includes(" ")) return value.includes(alias);
-    if (alias.length <= 3) return value.split(" ").includes(alias);
+    if (value === alias) return true;
+
+    const valueTokens = value.split(" ");
+    const aliasTokens = alias.split(" ");
+
+    if (aliasTokens.length === 1) {
+      return valueTokens.includes(alias);
+    }
+
     return value.includes(alias);
   };
 
@@ -226,20 +267,8 @@ export async function importMembersFromCSV(csvContent: string) {
     }
 
     try {
-      const baseEmail = rawEmail && rawEmail.trim().length > 0
-        ? rawEmail
-        : [firstName, lastName].filter(Boolean).join(".");
-      const safeLocal = baseEmail
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-z0-9]+/g, ".")
-        .replace(/^\.+|\.+$/g, "")
-        .replace(/\.+/g, ".");
       const tessera = getField(tesseraIndex);
-      const email = (rawEmail ?? "").trim()
-        ? (rawEmail as string).toLowerCase()
-        : `${safeLocal || "member"}.${tessera ?? i + 1}@no-email.local`;
+      const email = rawEmail?.trim().toLowerCase() ?? "";
 
       await db.insert(members).values({
         organizationId: orgId,
@@ -260,7 +289,7 @@ export async function importMembersFromCSV(csvContent: string) {
         citta: getField(cittaIndex) ?? null,
         prov: getField(provIndex) ?? null,
         luogoNascita: getField(luogoIndex) ?? null,
-        birthDate: getField(birthIndex) ?? null,
+        birthDate: normalizeDate(getField(birthIndex)),
         tagliaMagliaCotone: getField(tagliaMagliaCotoneIndex) ?? null,
         tagliaMagliaSolar: getField(tagliaMagliaSolarIndex) ?? null,
         tagliaMagliaPulsar: getField(tagliaMagliaPulsarIndex) ?? null,
