@@ -1168,7 +1168,7 @@ export function MembersList({
                             </div>
 
                             {activeTab === "profilo" ? (
-                              <div className="space-y-5">
+                              <div key="profilo" className="space-y-5">
                                 <div className="grid gap-6 md:grid-cols-[190px_1fr]">
                                   <div>
                                     <div className="flex h-36 w-36 items-center justify-center overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 text-xs text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800">
@@ -1347,7 +1347,7 @@ export function MembersList({
                                 </div>
                               </div>
                             ) : (
-                              <div className="space-y-5">
+                              <div key="dettagli" className="space-y-5">
                                 <div className="grid gap-5 md:grid-cols-2">
                                   <div>
                                     <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
