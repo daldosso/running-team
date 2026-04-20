@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { members, payments } from "@/lib/db/schema";
 import { getOrganizationId } from "@/lib/org-context";
-import { eq, desc } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 export async function exportMembersAsCSV() {
   const orgId = await getOrganizationId();
@@ -210,6 +210,17 @@ export async function importMembersFromCSV(csvContent: string) {
       aliases.some((alias) => matchesAlias(header, alias))
     );
 
+  const normalizeMergeKeyPart = (value: string) =>
+    value
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ");
+
+  const buildMergeKey = (firstName: string, lastName: string) =>
+    `${normalizeMergeKeyPart(firstName)}|${normalizeMergeKeyPart(lastName)}`;
+
   const nameIndex = findHeaderIndex(["nome"]);
   const lastNameIndex = findHeaderIndex(["cognome"]);
   const emailIndex = findHeaderIndex(["email", "e mail", "mail"]);
@@ -243,7 +254,20 @@ export async function importMembersFromCSV(csvContent: string) {
   const tagliaFelpaPulsarIndex = findHeaderIndex(["taglia felpa pulsar", "felpa pulsar"]);
 
   const imported = [];
+  const updated = [];
   const errors = [];
+
+  const existingMembers = await db
+    .select()
+    .from(members)
+    .where(eq(members.organizationId, orgId));
+
+  const existingMembersByKey = new Map(
+    existingMembers.map((member) => [
+      buildMergeKey(member.firstName, member.lastName),
+      member,
+    ])
+  );
 
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
@@ -269,9 +293,9 @@ export async function importMembersFromCSV(csvContent: string) {
     try {
       const tessera = getField(tesseraIndex);
       const email = rawEmail?.trim().toLowerCase() ?? "";
-
-      await db.insert(members).values({
-        organizationId: orgId,
+      const mergeKey = buildMergeKey(firstName, lastName);
+      const existingMember = existingMembersByKey.get(mergeKey);
+      const nextValues = {
         firstName,
         lastName,
         email,
@@ -298,8 +322,75 @@ export async function importMembersFromCSV(csvContent: string) {
         tagliaFelpaSolar: getField(tagliaFelpaSolarIndex) ?? null,
         tagliaFelpaPulsar: getField(tagliaFelpaPulsarIndex) ?? null,
         notes: getField(notesIndex) ?? null,
-      });
-      imported.push(firstName + " " + lastName);
+      };
+
+      if (existingMember) {
+        await db
+          .update(members)
+          .set({
+            firstName,
+            lastName,
+            email: nextValues.email || existingMember.email,
+            phone: nextValues.phone ?? existingMember.phone,
+            tessera: nextValues.tessera ?? existingMember.tessera,
+            codiceFiscale: nextValues.codiceFiscale ?? existingMember.codiceFiscale,
+            categoria: nextValues.categoria ?? existingMember.categoria,
+            straniero: nextValues.straniero ?? existingMember.straniero,
+            status: nextValues.status ?? existingMember.status,
+            genere: nextValues.genere ?? existingMember.genere,
+            materiale2026Consegna:
+              nextValues.materiale2026Consegna ?? existingMember.materiale2026Consegna,
+            spedizione: nextValues.spedizione ?? existingMember.spedizione,
+            indirizzo: nextValues.indirizzo ?? existingMember.indirizzo,
+            cap: nextValues.cap ?? existingMember.cap,
+            citta: nextValues.citta ?? existingMember.citta,
+            prov: nextValues.prov ?? existingMember.prov,
+            luogoNascita: nextValues.luogoNascita ?? existingMember.luogoNascita,
+            birthDate: nextValues.birthDate ?? existingMember.birthDate,
+            tagliaMagliaCotone:
+              nextValues.tagliaMagliaCotone ?? existingMember.tagliaMagliaCotone,
+            tagliaMagliaSolar:
+              nextValues.tagliaMagliaSolar ?? existingMember.tagliaMagliaSolar,
+            tagliaMagliaPulsar:
+              nextValues.tagliaMagliaPulsar ?? existingMember.tagliaMagliaPulsar,
+            tagliaCanottaSolar:
+              nextValues.tagliaCanottaSolar ?? existingMember.tagliaCanottaSolar,
+            tagliaCanottaPulsar:
+              nextValues.tagliaCanottaPulsar ?? existingMember.tagliaCanottaPulsar,
+            tagliaFelpaSolar:
+              nextValues.tagliaFelpaSolar ?? existingMember.tagliaFelpaSolar,
+            tagliaFelpaPulsar:
+              nextValues.tagliaFelpaPulsar ?? existingMember.tagliaFelpaPulsar,
+            notes: nextValues.notes ?? existingMember.notes,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(members.id, existingMember.id),
+              eq(members.organizationId, orgId)
+            )
+          );
+
+        const mergedMember = {
+          ...existingMember,
+          ...Object.fromEntries(
+            Object.entries(nextValues).filter(([, value]) => value !== null)
+          ),
+          email: nextValues.email || existingMember.email,
+        };
+        existingMembersByKey.set(mergeKey, mergedMember);
+        updated.push(firstName + " " + lastName);
+      } else {
+        const [insertedMember] = await db
+          .insert(members)
+          .values({
+            organizationId: orgId,
+            ...nextValues,
+          })
+          .returning();
+        existingMembersByKey.set(mergeKey, insertedMember);
+        imported.push(firstName + " " + lastName);
+      }
     } catch (error) {
       errors.push(`Riga ${i + 1} (${firstName} ${lastName}): ${(error as Error).message}`);
     }
@@ -308,6 +399,7 @@ export async function importMembersFromCSV(csvContent: string) {
   return {
     ok: true,
     imported: imported.length,
+    updated: updated.length,
     errors: errors.length > 0 ? errors : undefined,
   };
 }

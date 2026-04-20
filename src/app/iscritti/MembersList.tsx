@@ -584,7 +584,7 @@ export function MembersList({
                   setImportError(result.error || "Errore sconosciuto");
                 } else {
                   alert(
-                    `Importati ${result.imported} iscritti.${result.errors ? " " + result.errors.length + " errori." : ""}`
+                    `Import completato: ${result.imported} nuovi iscritti, ${result.updated ?? 0} aggiornati.${result.errors ? " " + result.errors.length + " errori." : ""}`
                   );
                   router.refresh();
                 }
