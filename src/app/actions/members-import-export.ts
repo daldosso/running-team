@@ -226,7 +226,21 @@ export async function importMembersFromCSV(csvContent: string) {
   const emailIndex = findHeaderIndex(["email", "e mail", "mail"]);
 
   if (nameIndex === -1 || lastNameIndex === -1) {
-    return { ok: false, error: "CSV mancante di colonne richieste: Nome, Cognome" };
+    const availableHeaders = rawHeaders
+      .map((header) => header.trim())
+      .filter(Boolean);
+
+    return {
+      ok: false,
+      error: "CSV mancante di colonne richieste: Nome, Cognome",
+      details:
+        availableHeaders.length > 0
+          ? [
+              `Colonne trovate: ${availableHeaders.join(", ")}`,
+              `Separatore rilevato: ${delimiter === "\t" ? "tab" : delimiter}`,
+            ]
+          : ["Il file non contiene un'intestazione leggibile."],
+    };
   }
 
   const phoneIndex = findHeaderIndex(["telefono", "cellulare", "cell"]);
@@ -400,6 +414,10 @@ export async function importMembersFromCSV(csvContent: string) {
     ok: true,
     imported: imported.length,
     updated: updated.length,
+    message:
+      errors.length > 0
+        ? `Import completato con ${errors.length} ${errors.length === 1 ? "errore" : "errori"}.`
+        : undefined,
     errors: errors.length > 0 ? errors : undefined,
   };
 }

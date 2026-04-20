@@ -48,6 +48,11 @@ const DEFAULT_COLUMN_WIDTHS = [
   80, // Azioni
 ];
 
+type ImportFeedback = {
+  message: string;
+  details?: string[];
+};
+
 const normalizeColumnOrder = (order?: number[]) => {
   const base = COLUMN_LABELS.map((_, index) => index);
   if (!order || order.length === 0) return base;
@@ -190,7 +195,7 @@ export function MembersList({
   const didMountRef = useRef(false);
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const [isImporting, setIsImporting] = useState(false);
-  const [importError, setImportError] = useState<string | null>(null);
+  const [importFeedback, setImportFeedback] = useState<ImportFeedback | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isDeletingSelected, setIsDeletingSelected] = useState(false);
@@ -228,6 +233,23 @@ export function MembersList({
     }
 
     throw new Error("Formato file non supportato. Usa CSV o Excel.");
+  };
+
+  const renderImportFeedback = () => {
+    if (!importFeedback) return null;
+
+    return (
+      <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
+        <p className="font-medium">{importFeedback.message}</p>
+        {importFeedback.details && importFeedback.details.length > 0 ? (
+          <ul className="mt-1 list-disc space-y-1 pl-4">
+            {importFeedback.details.map((detail, index) => (
+              <li key={`${detail}-${index}`}>{detail}</li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+    );
   };
 
   useEffect(() => {
@@ -576,34 +598,44 @@ export function MembersList({
               const file = e.currentTarget.files?.[0];
               if (!file) return;
               setIsImporting(true);
-              setImportError(null);
+              setImportFeedback(null);
               try {
                 const content = await readImportFileAsCSV(file);
                 const result = await importMembersFromCSV(content);
                 if (!result.ok) {
-                  setImportError(result.error || "Errore sconosciuto");
+                  setImportFeedback({
+                    message: result.error || "Errore sconosciuto",
+                    details: "details" in result && Array.isArray(result.details) ? result.details : [],
+                  });
                 } else {
+                  if (result.errors?.length) {
+                    setImportFeedback({
+                      message:
+                        result.message ||
+                        `Import completato con ${result.errors.length} ${result.errors.length === 1 ? "errore" : "errori"}.`,
+                      details: result.errors,
+                    });
+                  }
                   alert(
                     `Import completato: ${result.imported} nuovi iscritti, ${result.updated ?? 0} aggiornati.${result.errors ? " " + result.errors.length + " errori." : ""}`
                   );
                   router.refresh();
                 }
               } catch (err) {
-                setImportError((err as Error).message);
+                const error = err as Error;
+                setImportFeedback({
+                  message: "Import fallito",
+                  details: [error.message],
+                });
               } finally {
                 setIsImporting(false);
                 e.currentTarget.value = "";
               }
             }}
           />
-          {importError && (
-            <span className="text-xs text-red-600 dark:text-red-400">{importError}</span>
-          )}
         </div>
       </div>
-      {importError && (
-        <span className="text-xs text-red-600 dark:text-red-400">{importError}</span>
-      )}
+      {renderImportFeedback()}
       {isEmpty ? (
         <p className="rounded-xl border border-dashed border-zinc-300 py-8 text-center text-zinc-500 dark:border-zinc-600">
           Nessun iscritto. Aggiungi il primo con &quot;+ Nuovo iscritto&quot; oppure importa un file.
