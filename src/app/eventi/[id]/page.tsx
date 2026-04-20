@@ -6,6 +6,7 @@ import { eventParticipants, events, members, races } from "@/lib/db/schema";
 import { getOrganizationId } from "@/lib/org-context";
 import { AddEventParticipantForm } from "./AddEventParticipantForm";
 import { EventParticipantsList } from "./EventParticipantsList";
+import { FormattedEventText } from "../FormattedEventText";
 
 export const dynamic = "force-dynamic";
 
@@ -73,7 +74,10 @@ export default async function EventoDetailPage({
         </div>
         <h1 className="mb-2 text-2xl font-bold">{event.title}</h1>
         {event.description ? (
-          <p className="text-zinc-600 dark:text-zinc-400">{event.description}</p>
+          <FormattedEventText
+            text={event.description}
+            className="text-zinc-600 dark:text-zinc-400"
+          />
         ) : null}
         {race ? (
           <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
@@ -95,4 +99,3 @@ export default async function EventoDetailPage({
     </div>
   );
 }
-

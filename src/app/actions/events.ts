@@ -15,6 +15,11 @@ export type EventFormData = {
   raceId?: string;
 };
 
+const normalizeOptional = (value?: string) => {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+};
+
 export async function createEvent(formData: EventFormData) {
   const orgId = await getOrganizationId();
   if (!orgId) return { ok: false, error: "Organizzazione non specificata" };
@@ -30,16 +35,49 @@ export async function createEvent(formData: EventFormData) {
     .values({
       organizationId: orgId,
       title,
-      description: formData.description?.trim() || null,
+      description: normalizeOptional(formData.description),
       date,
-      time: formData.time?.trim() || null,
-      location: formData.location?.trim() || null,
-      raceId: formData.raceId || null,
+      time: normalizeOptional(formData.time),
+      location: normalizeOptional(formData.location),
+      raceId: normalizeOptional(formData.raceId),
     })
     .returning({ id: events.id });
 
   revalidatePath("/eventi");
   return { ok: true, id: row?.id };
+}
+
+export async function updateEvent(eventId: string, formData: EventFormData) {
+  const orgId = await getOrganizationId();
+  if (!orgId) return { ok: false, error: "Organizzazione non specificata" };
+
+  const title = formData.title?.trim();
+  const date = formData.date?.trim();
+  if (!title || !date) {
+    return { ok: false, error: "Titolo e data sono obbligatori" };
+  }
+
+  const [eventRow] = await db
+    .select({ id: events.id })
+    .from(events)
+    .where(and(eq(events.id, eventId), eq(events.organizationId, orgId)));
+  if (!eventRow) return { ok: false, error: "Evento non trovato" };
+
+  await db
+    .update(events)
+    .set({
+      title,
+      description: normalizeOptional(formData.description),
+      date,
+      time: normalizeOptional(formData.time),
+      location: normalizeOptional(formData.location),
+      raceId: normalizeOptional(formData.raceId),
+    })
+    .where(and(eq(events.id, eventId), eq(events.organizationId, orgId)));
+
+  revalidatePath("/eventi");
+  revalidatePath(`/eventi/${eventId}`);
+  return { ok: true };
 }
 
 export async function deleteEvent(eventId: string) {
