@@ -48,6 +48,8 @@ const DEFAULT_COLUMN_WIDTHS = [
   80, // Azioni
 ];
 
+const ITEMS_PER_PAGE = 10;
+
 type ImportFeedback = {
   message: string;
   details?: string[];
@@ -199,6 +201,8 @@ export function MembersList({
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isDeletingSelected, setIsDeletingSelected] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const tableScrollRef = useRef<HTMLDivElement | null>(null);
   const [filters, setFilters] = useState<{
     status: string | null;
     genere: string | null;
@@ -343,9 +347,16 @@ export function MembersList({
     return next;
   }, [filteredList, latestPaymentByMember, sortState]);
 
+  const totalPages = Math.max(1, Math.ceil(sortedList.length / ITEMS_PER_PAGE));
+
+  const paginatedList = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return sortedList.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [currentPage, sortedList]);
+
   const visibleMemberIds = useMemo(
-    () => filteredList.map((member) => member.id),
-    [filteredList]
+    () => paginatedList.map((member) => member.id),
+    [paginatedList]
   );
 
   const selectedVisibleCount = useMemo(
@@ -405,6 +416,14 @@ export function MembersList({
   useEffect(() => {
     setSelectedIds((prev) => prev.filter((id) => list.some((member) => member.id === id)));
   }, [list]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, filters]);
+
+  useEffect(() => {
+    setCurrentPage((prev) => Math.min(prev, totalPages));
+  }, [totalPages]);
 
   const uploadMemberPhoto = async (memberId: string, file: File) => {
     setPhotoUploading(true);
@@ -490,6 +509,9 @@ export function MembersList({
   const isDroppableColumn = (index: number) => index !== 0 && index !== 13;
   const isSortableColumn = (index: number) => index >= 1 && index <= 12;
   const isEmpty = list.length === 0;
+  const hasNoResults = !isEmpty && sortedList.length === 0;
+  const pageStart = sortedList.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1;
+  const pageEnd = Math.min(currentPage * ITEMS_PER_PAGE, sortedList.length);
 
   const toggleMemberSelection = (memberId: string) => {
     setSelectedIds((prev) =>
@@ -819,7 +841,7 @@ export function MembersList({
           </div>
         )}
       </div>
-      <div className="overflow-x-auto">
+      <div ref={tableScrollRef} className="overflow-x-auto">
         <table className="min-w-[1800px] w-full table-fixed text-left text-sm whitespace-nowrap">
         <thead>
           <tr className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50">
@@ -936,7 +958,7 @@ export function MembersList({
           </tr>
         </thead>
         <tbody>
-          {sortedList.map((m) => {
+          {paginatedList.map((m) => {
             const isEditing = editingId === m.id;
             const serverPhoto = m.photoUrl ? `/api/members/photo/${m.id}` : null;
             const currentPhoto = isEditing ? photoPreview ?? serverPhoto : serverPhoto;
@@ -1645,9 +1667,41 @@ export function MembersList({
             );
           })}
         </tbody>
-      </table>
+        </table>
       </div>
-        </>
+      {hasNoResults ? (
+        <div className="border-t border-zinc-200 bg-zinc-50 px-3 py-6 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-800/40 dark:text-zinc-400">
+          Nessun iscritto trovato con i filtri correnti.
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-200 bg-zinc-50 px-3 py-3 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-800/40 dark:text-zinc-300">
+          <span>
+            Mostrando {pageStart}-{pageEnd} di {sortedList.length} iscritti
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            >
+              Precedente
+            </button>
+            <span className="min-w-24 text-center text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              Pagina {currentPage} / {totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            >
+              Successiva
+            </button>
+          </div>
+        </div>
+      )}
+      </>
       )}
     </div>
   );
