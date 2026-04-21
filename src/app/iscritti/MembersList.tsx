@@ -32,8 +32,8 @@ const COLUMN_LABELS = [
 ];
 
 const DEFAULT_COLUMN_WIDTHS = [
-  112, // Selezione + Avatar
-  200, // Nome
+  132, // Selezione + Avatar
+  220, // Nome
   110, // Tessera
   190, // Codice Fiscale
   80, // Cat.
@@ -473,6 +473,17 @@ export function MembersList({
       default:
         return "ring-1 ring-zinc-200 dark:ring-zinc-700";
     }
+  };
+
+  const materialBadgeClass = (value?: string | null) => {
+    const normalized = value?.trim().toLowerCase();
+    if (normalized === "con") {
+      return "border-emerald-400/30 bg-emerald-500/12 text-emerald-300";
+    }
+    if (normalized === "non") {
+      return "border-zinc-400/20 bg-zinc-500/10 text-zinc-300";
+    }
+    return "border-zinc-400/20 bg-zinc-500/10 text-zinc-300";
   };
 
   const isDraggableColumn = (index: number) => index !== 0 && index !== 13;
@@ -931,7 +942,11 @@ export function MembersList({
             const currentPhoto = isEditing ? photoPreview ?? serverPhoto : serverPhoto;
 
             const cells = [
-              <td key={`avatar-${m.id}`} className="px-4 py-3" style={{ width: colWidths[0] }}>
+              <td
+                key={`avatar-${m.id}`}
+                className="px-4 py-3"
+                style={{ width: colWidths[0], minWidth: colWidths[0] }}
+              >
                 <div className="flex items-center gap-3">
                   <input
                     type="checkbox"
@@ -943,7 +958,7 @@ export function MembersList({
                   <button
                     type="button"
                     onClick={() => setEditingId(m.id)}
-                    className={`flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-zinc-200 bg-zinc-100 text-[10px] font-semibold text-zinc-500 transition hover:scale-[1.02] hover:shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 ${statusRingClass(
+                    className={`flex h-10 w-10 min-h-10 min-w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-200 bg-zinc-100 text-[10px] font-semibold leading-none text-zinc-500 transition hover:scale-[1.02] hover:shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 ${statusRingClass(
                       m.status
                     )}`}
                     aria-label={`Modifica ${m.firstName} ${m.lastName}`}
@@ -999,7 +1014,17 @@ export function MembersList({
                 className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
                 style={{ width: colWidths[6] }}
               >
-                {m.materiale2026Consegna ?? "—"}
+                {m.materiale2026Consegna ? (
+                  <span
+                    className={`inline-flex min-w-[3.25rem] items-center justify-center rounded-md border px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] ${materialBadgeClass(
+                      m.materiale2026Consegna
+                    )}`}
+                  >
+                    {m.materiale2026Consegna}
+                  </span>
+                ) : (
+                  "—"
+                )}
               </td>,
               <td
                 key={`spedizione-${m.id}`}
@@ -1055,9 +1080,8 @@ export function MembersList({
                     <button
                       type="button"
                       onClick={() => setEditingId(m.id)}
-                      className="rounded-md p-1 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800 dark:hover:text-white"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-transparent text-zinc-500 transition-colors hover:border-zinc-200 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-white"
                       aria-label="Modifica iscritto"
-                      title="Modifica"
                     >
                       <Edit2 size={16} />
                     </button>
@@ -1071,9 +1095,8 @@ export function MembersList({
                     >
                       <button
                         type="submit"
-                        className="rounded-md p-1 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/30 dark:hover:text-red-300"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-transparent text-red-500 transition-colors hover:border-red-200/60 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:border-red-900/60 dark:hover:bg-red-950/30 dark:hover:text-red-300"
                         aria-label="Elimina iscritto"
-                        title="Elimina"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -1088,7 +1111,8 @@ export function MembersList({
             return (
               <Fragment key={m.id}>
                 <tr
-                  className="border-b border-zinc-100 last:border-0 dark:border-zinc-800"
+                  className="cursor-pointer border-b border-zinc-100 transition-colors duration-150 hover:bg-zinc-100/70 last:border-0 dark:border-zinc-800 dark:hover:bg-zinc-800/45"
+                  onDoubleClick={() => setEditingId(m.id)}
                 >
                   {columnOrder.map((colIndex) => cells[colIndex])}
                 </tr>
