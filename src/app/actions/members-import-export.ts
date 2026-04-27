@@ -288,6 +288,9 @@ export async function importMembersFromCSV(csvContent: string) {
     if (!line) continue;
 
     const parts = parseCSVLine(line, delimiter);
+    const isEmptyRow = parts.every((part) => part.trim() === "");
+    if (isEmptyRow) continue;
+
     const getField = (index: number) => {
       if (index === -1) return null;
       const val = parts[index] ?? "";
