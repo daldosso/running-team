@@ -156,7 +156,7 @@ export default async function GarePage() {
               href="/eventi"
               className="w-fit rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
             >
-              Vai agli eventi
+              Vai alle info
             </Link>
           </div>
         </div>
@@ -174,13 +174,13 @@ export default async function GarePage() {
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-5">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-base font-semibold sm:text-lg">Ultimi eventi</h2>
+              <h2 className="text-base font-semibold sm:text-lg">Informazioni generali</h2>
               <Link href="/eventi" className="text-xs text-zinc-500 hover:text-zinc-700 sm:text-sm">
                 Tutti
               </Link>
             </div>
             {latestEvents.length === 0 ? (
-              <p className="text-sm text-zinc-500">Nessun evento disponibile.</p>
+              <p className="text-sm text-zinc-500">Nessuna informazione disponibile.</p>
             ) : (
               <ul className="space-y-2 text-sm">
                 {latestEvents.map((eventItem) => (
@@ -196,10 +196,11 @@ export default async function GarePage() {
                       <div className="font-semibold leading-snug text-white">
                         {eventItem.title}
                       </div>
-                      <div className="text-xs text-zinc-300">
-                        {eventItem.date}
-                        {eventItem.time ? ` · ${eventItem.time}` : ""}
-                      </div>
+                      {eventItem.description ? (
+                        <div className="line-clamp-2 text-xs text-zinc-300">
+                          {eventItem.description}
+                        </div>
+                      ) : null}
                     </div>
                   </li>
                     );

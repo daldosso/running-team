@@ -52,7 +52,7 @@ export default async function PagamentiPage() {
         // Per il runner mostriamo solo i pagamenti associati al suo "member"
         // (mapping semplice: match tra email utente e email member, oppure memberId se presente).
         const [user] = await db
-          .select({ email: users.email, memberId: users.memberId })
+          .select({ email: users.email, name: users.name, memberId: users.memberId })
           .from(users)
           .where(eq(users.id, session.userId))
           .limit(1);
@@ -67,6 +67,17 @@ export default async function PagamentiPage() {
                 firstName: members.firstName,
                 lastName: members.lastName,
                 email: members.email,
+                phone: members.phone,
+                birthDate: members.birthDate,
+                luogoNascita: members.luogoNascita,
+                codiceFiscale: members.codiceFiscale,
+                tessera: members.tessera,
+                categoria: members.categoria,
+                indirizzo: members.indirizzo,
+                cap: members.cap,
+                citta: members.citta,
+                prov: members.prov,
+                notes: members.notes,
                 photoUrl: members.photoUrl,
               })
               .from(members)
@@ -79,6 +90,17 @@ export default async function PagamentiPage() {
                   firstName: members.firstName,
                   lastName: members.lastName,
                   email: members.email,
+                  phone: members.phone,
+                  birthDate: members.birthDate,
+                  luogoNascita: members.luogoNascita,
+                  codiceFiscale: members.codiceFiscale,
+                  tessera: members.tessera,
+                  categoria: members.categoria,
+                  indirizzo: members.indirizzo,
+                  cap: members.cap,
+                  citta: members.citta,
+                  prov: members.prov,
+                  notes: members.notes,
                   photoUrl: members.photoUrl,
                 })
                 .from(members)
@@ -87,7 +109,29 @@ export default async function PagamentiPage() {
             : [null];
 
         if (!member) {
-          return [[], [], null];
+          const [firstName = "", ...lastNameParts] = (user?.name ?? "").trim().split(/\s+/);
+          return [
+            [],
+            [],
+            {
+              id: null,
+              firstName,
+              lastName: lastNameParts.join(" "),
+              email: user?.email ?? "",
+              phone: null,
+              birthDate: null,
+              luogoNascita: null,
+              codiceFiscale: null,
+              tessera: null,
+              categoria: null,
+              indirizzo: null,
+              cap: null,
+              citta: null,
+              prov: null,
+              notes: null,
+              photoUrl: null,
+            },
+          ];
         }
 
         const [paymentsForMember] = await Promise.all([
@@ -123,6 +167,17 @@ export default async function PagamentiPage() {
               firstName: runnerProfile.firstName,
               lastName: runnerProfile.lastName,
               email: runnerProfile.email,
+              phone: runnerProfile.phone,
+              birthDate: runnerProfile.birthDate,
+              luogoNascita: runnerProfile.luogoNascita,
+              codiceFiscale: runnerProfile.codiceFiscale,
+              tessera: runnerProfile.tessera,
+              categoria: runnerProfile.categoria,
+              indirizzo: runnerProfile.indirizzo,
+              cap: runnerProfile.cap,
+              citta: runnerProfile.citta,
+              prov: runnerProfile.prov,
+              notes: runnerProfile.notes,
               photoUrl: runnerProfile.photoUrl ?? null,
             }}
           />

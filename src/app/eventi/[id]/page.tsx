@@ -62,7 +62,7 @@ export default async function EventoDetailPage({
           href="/eventi"
           className="text-sm text-zinc-600 hover:underline dark:text-zinc-400"
         >
-          ← Torna agli eventi
+          ← Torna alle info
         </Link>
       </div>
 

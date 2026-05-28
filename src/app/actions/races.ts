@@ -48,6 +48,42 @@ export async function createRace(formData: RaceFormData) {
   return { ok: true };
 }
 
+export async function updateRace(id: string, formData: RaceFormData) {
+  const orgId = await getOrganizationId();
+  if (!orgId) return { ok: false, error: "Organizzazione non specificata" };
+
+  const raceDate = formData.raceDate?.trim();
+  const type = formData.type?.trim();
+  const name = formData.name?.trim();
+  const location = formData.location?.trim();
+  if (!raceDate || !type || !name || !location) {
+    return {
+      ok: false,
+      error: "Data, tipo, nome e località sono obbligatori",
+    };
+  }
+
+  await db
+    .update(races)
+    .set({
+      raceDate,
+      type,
+      name,
+      location,
+      province: formData.province?.trim() || null,
+      distance: formData.distance?.trim() || null,
+      time: formData.time?.trim() || null,
+      infoUrl: formData.infoUrl?.trim() || null,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(races.id, id), eq(races.organizationId, orgId)));
+
+  revalidatePath("/");
+  revalidatePath("/gare");
+  revalidatePath(`/gare/${id}`);
+  return { ok: true };
+}
+
 export async function deleteRace(id: string) {
   const orgId = await getOrganizationId();
   if (!orgId) return { ok: false, error: "Organizzazione non specificata" };

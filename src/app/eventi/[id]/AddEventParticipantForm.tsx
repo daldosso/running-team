@@ -19,7 +19,7 @@ export function AddEventParticipantForm({
   if (availableMembers.length === 0) {
     return (
       <p className="text-sm text-zinc-500">
-        Tutti gli iscritti sono già in questo evento (o non ci sono iscritti).
+        Tutti gli iscritti sono già in questa info (o non ci sono iscritti).
       </p>
     );
   }

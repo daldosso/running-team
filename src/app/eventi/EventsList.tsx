@@ -13,21 +13,23 @@ type RaceOption = { id: string; name: string; raceDate: string };
 export function EventsList({
   events: list,
   races,
+  canManage = false,
 }: {
   events: Event[];
   races: RaceOption[];
+  canManage?: boolean;
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   if (list.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-zinc-300 py-8 text-center text-zinc-500 dark:border-zinc-600">
-        Nessun evento. Aggiungi il primo con “+ Nuovo evento”.
+        {canManage
+          ? "Nessuna info. Aggiungi la prima con “+ Nuova info”."
+          : "Nessuna info disponibile."}
       </p>
     );
   }
-
-  const raceMap = new Map(races.map((r) => [r.id, r.name]));
 
   const formatDate = (d: string) => {
     const [y, m, day] = d.split("-");
@@ -39,10 +41,7 @@ export function EventsList({
       <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50">
-            <th className="px-4 py-3 font-medium">Data</th>
-            <th className="px-4 py-3 font-medium">Evento</th>
-            <th className="px-4 py-3 font-medium">Luogo</th>
-            <th className="px-4 py-3 font-medium">Gara</th>
+            <th className="px-4 py-3 font-medium">Info</th>
             <th className="w-28 px-4 py-3" />
           </tr>
         </thead>
@@ -55,12 +54,6 @@ export function EventsList({
                 <tr
                   className="border-b border-zinc-100 last:border-0 dark:border-zinc-800"
                 >
-                  <td className="whitespace-nowrap px-4 py-3">
-                    {formatDate(e.date)}
-                    {e.time ? (
-                      <span className="ml-2 text-zinc-500">ore {e.time}</span>
-                    ) : null}
-                  </td>
                   <td className="px-4 py-3">
                     <Link
                       href={`/eventi/${e.id}`}
@@ -68,6 +61,10 @@ export function EventsList({
                     >
                       {e.title}
                     </Link>
+                    <div className="mt-1 text-xs text-zinc-500">
+                      {formatDate(e.date)}
+                      {e.time ? <span className="ml-2">ore {e.time}</span> : null}
+                    </div>
                     {e.description ? (
                       <div className="mt-1 text-xs text-zinc-500">
                         <FormattedEventText
@@ -77,14 +74,8 @@ export function EventsList({
                       </div>
                     ) : null}
                   </td>
-                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
-                    {e.location ?? "—"}
-                  </td>
-                  <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
-                    {e.raceId ? raceMap.get(e.raceId) ?? "—" : "—"}
-                  </td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
+                    {canManage ? <div className="flex items-center gap-3">
                       <button
                         type="button"
                         onClick={() => setEditingId((current) => (current === e.id ? null : e.id))}
@@ -98,7 +89,7 @@ export function EventsList({
                           await deleteEvent(e.id);
                         }}
                         onSubmit={(ev) => {
-                          if (!confirm("Eliminare questo evento?")) ev.preventDefault();
+                          if (!confirm("Eliminare questa info?")) ev.preventDefault();
                         }}
                       >
                         <button
@@ -109,12 +100,12 @@ export function EventsList({
                           <Trash2 size={16} />
                         </button>
                       </form>
-                    </div>
+                    </div> : null}
                   </td>
                 </tr>
                 {isEditing ? (
                   <tr className="border-b border-zinc-100 dark:border-zinc-800">
-                    <td colSpan={5} className="px-4 py-4">
+                    <td colSpan={2} className="px-4 py-4">
                       <EventForm
                         races={races}
                         event={e}

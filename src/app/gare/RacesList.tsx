@@ -1,9 +1,11 @@
 "use client";
 
+import { Fragment, useState } from "react";
 import type { Race } from "@/lib/db/schema";
 import Link from "next/link";
-import { Trash2 } from "lucide-react";
+import { Edit2, Trash2 } from "lucide-react";
 import { deleteRace } from "@/app/actions/races";
+import { RaceForm } from "./RaceForm";
 
 export function RacesList({
   races: list,
@@ -12,6 +14,8 @@ export function RacesList({
   races: Race[];
   canManage?: boolean;
 }) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+
   if (list.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-zinc-300 py-8 text-center text-zinc-500 dark:border-zinc-600">
@@ -53,24 +57,41 @@ export function RacesList({
               {r.distance ? `${r.distance} km` : "Distanza —"}
             </div>
             {canManage && (
-              <form
-                action={async () => {
-                  await deleteRace(r.id);
-                }}
-                onSubmit={(e) => {
-                  if (!confirm("Eliminare questa gara dall'elenco?")) e.preventDefault();
-                }}
-                className="mt-3"
-              >
+              <div className="mt-3 flex items-center gap-3">
                 <button
-                  type="submit"
-                  className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                  title="Elimina"
+                  type="button"
+                  onClick={() => setEditingId((current) => (current === r.id ? null : r.id))}
+                  className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+                  title="Modifica"
                 >
-                  <Trash2 size={16} />
+                  <Edit2 size={16} />
                 </button>
-              </form>
+                <form
+                  action={async () => {
+                    await deleteRace(r.id);
+                  }}
+                  onSubmit={(e) => {
+                    if (!confirm("Eliminare questa gara dall'elenco?")) e.preventDefault();
+                  }}
+                >
+                  <button
+                    type="submit"
+                    className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                    title="Elimina"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </form>
+              </div>
             )}
+            {editingId === r.id ? (
+              <RaceForm
+                race={r}
+                defaultOpen
+                onCancel={() => setEditingId(null)}
+                className="mt-3"
+              />
+            ) : null}
           </div>
         ))}
       </div>
@@ -89,10 +110,8 @@ export function RacesList({
           </thead>
           <tbody>
             {list.map((r) => (
-              <tr
-                key={r.id}
-                className="border-b border-zinc-100 last:border-0 dark:border-zinc-800"
-              >
+              <Fragment key={r.id}>
+              <tr className="border-b border-zinc-100 last:border-0 dark:border-zinc-800">
                 <td className="whitespace-nowrap px-4 py-3">{formatDate(r.raceDate)}</td>
                 <td className="px-4 py-3">
                   <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-700">
@@ -112,25 +131,47 @@ export function RacesList({
                 <td className="px-4 py-3 text-zinc-500">{r.distance ?? "—"}</td>
                 <td className="px-4 py-3">
                   {canManage ? (
-                    <form
-                      action={async () => {
-                        await deleteRace(r.id);
-                      }}
-                      onSubmit={(e) => {
-                        if (!confirm("Eliminare questa gara dall'elenco?")) e.preventDefault();
-                      }}
-                    >
+                    <div className="flex items-center gap-3">
                       <button
-                        type="submit"
-                        className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                        title="Elimina"
+                        type="button"
+                        onClick={() => setEditingId((current) => (current === r.id ? null : r.id))}
+                        className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+                        title="Modifica"
                       >
-                        <Trash2 size={16} />
+                        <Edit2 size={16} />
                       </button>
-                    </form>
+                      <form
+                        action={async () => {
+                          await deleteRace(r.id);
+                        }}
+                        onSubmit={(e) => {
+                          if (!confirm("Eliminare questa gara dall'elenco?")) e.preventDefault();
+                        }}
+                      >
+                        <button
+                          type="submit"
+                          className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                          title="Elimina"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </form>
+                    </div>
                   ) : null}
                 </td>
               </tr>
+              {editingId === r.id ? (
+                <tr className="border-b border-zinc-100 dark:border-zinc-800">
+                  <td colSpan={7} className="px-4 py-4">
+                    <RaceForm
+                      race={r}
+                      defaultOpen
+                      onCancel={() => setEditingId(null)}
+                    />
+                  </td>
+                </tr>
+              ) : null}
+              </Fragment>
             ))}
           </tbody>
         </table>

@@ -1,18 +1,20 @@
 import { desc, eq } from "drizzle-orm";
-import Link from "next/link";
 import { db } from "@/lib/db";
 import { events, races } from "@/lib/db/schema";
 import { getOrganizationId } from "@/lib/org-context";
+import { getSession } from "@/lib/auth";
 import { EventForm } from "./EventForm";
 import { EventsList } from "./EventsList";
 
 export const dynamic = "force-dynamic";
 
 export default async function EventiPage() {
+  const session = await getSession();
+  const canManage = session?.role === "owner" || session?.role === "admin";
   const orgId = await getOrganizationId();
   if (!orgId) {
     return (
-      <p className="text-zinc-500">Configura ORG_ID per vedere gli eventi.</p>
+      <p className="text-zinc-500">Configura ORG_ID per vedere le info.</p>
     );
   }
 
@@ -33,9 +35,9 @@ export default async function EventiPage() {
     <div>
       <h1 className="mb-6 text-2xl font-bold tracking-tight">Informazioni</h1>
 
-      <EventForm races={raceList} className="mb-8" />
+      {canManage ? <EventForm races={raceList} className="mb-8" /> : null}
 
-      <EventsList events={eventList} races={raceList} />
+      <EventsList events={eventList} races={raceList} canManage={canManage} />
     </div>
   );
 }

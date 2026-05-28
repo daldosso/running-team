@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { createPayment } from "@/app/actions/payments";
+import { useRef, useState } from "react";
+import { createPayment, importPaymentsFromCSV } from "@/app/actions/payments";
 
 type MemberOption = { id: string; firstName: string; lastName: string };
 
@@ -13,16 +13,62 @@ export function PaymentForm({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
 
   return (
     <div className={className}>
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
-      >
-        {open ? "Annulla" : "+ Nuovo pagamento"}
-      </button>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+        >
+          {open ? "Annulla" : "+ Nuovo pagamento"}
+        </button>
+        <button
+          type="button"
+          onClick={() => importInputRef.current?.click()}
+          disabled={isImporting}
+          className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-600 dark:hover:bg-zinc-800"
+        >
+          {isImporting ? "Importando..." : "↑ Import CSV"}
+        </button>
+        <input
+          ref={importInputRef}
+          type="file"
+          accept=".csv,text/csv"
+          className="hidden"
+          onChange={async (event) => {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            setIsImporting(true);
+            setFeedback(null);
+            try {
+              const content = await file.text();
+              const result = await importPaymentsFromCSV(content);
+              if (!result.ok) {
+                setFeedback(result.error ?? "Import non riuscito");
+              } else {
+                const warnings = result.errors?.length
+                  ? ` (${result.errors.length} avvisi)`
+                  : "";
+                setFeedback(`Import completato: ${result.imported} pagamenti${warnings}.`);
+              }
+            } catch {
+              setFeedback("Import non riuscito");
+            } finally {
+              setIsImporting(false);
+              event.currentTarget.value = "";
+            }
+          }}
+        />
+      </div>
+      {feedback ? <p className="mt-2 text-sm text-zinc-500">{feedback}</p> : null}
+      <p className="mt-2 text-xs text-zinc-500">
+        Colonne supportate: importo, iscritto, descrizione, stato, data.
+      </p>
       {open && (
         <form
           action={async (fd) => {
