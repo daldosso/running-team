@@ -5,6 +5,8 @@ import { members, payments } from "@/lib/db/schema";
 import { getOrganizationId } from "@/lib/org-context";
 import { and, desc, eq } from "drizzle-orm";
 
+type MemberPaymentStatus = "pending" | "completed" | "failed" | "refunded";
+
 export async function exportMembersAsCSV() {
   const orgId = await getOrganizationId();
   if (!orgId) return { ok: false, error: "Organizzazione non specificata" };
@@ -76,8 +78,8 @@ export async function exportMembersAsCSV() {
     escapeCSV(m.genere),
     escapeCSV(m.materiale2026Consegna),
     escapeCSV(m.spedizione),
-    m.createdAt ? new Date(m.createdAt).getFullYear().toString() : "",
-    escapeCSV(latestPaymentByMember.get(m.id)),
+    m.annoIscrizione?.toString() ?? (m.createdAt ? new Date(m.createdAt).getFullYear().toString() : ""),
+    escapeCSV(m.paymentStatus ?? latestPaymentByMember.get(m.id)),
     escapeCSV(m.indirizzo),
     escapeCSV(m.cap),
     escapeCSV(m.citta),
@@ -187,6 +189,16 @@ export async function importMembersFromCSV(csvContent: string) {
     return result.map((value) => value.replace(/\r$/, ""));
   };
 
+  const normalizePaymentStatus = (value: string | null): MemberPaymentStatus | null => {
+    if (!value) return null;
+    const normalized = normalizeHeader(value);
+    if (["pending", "inattesa", "inattesa"].includes(normalized)) return "pending";
+    if (["completed", "completato", "pagato", "paid", "ok"].includes(normalized)) return "completed";
+    if (["failed", "fallito", "errore", "ko"].includes(normalized)) return "failed";
+    if (["refunded", "rimborsato"].includes(normalized)) return "refunded";
+    return null;
+  };
+
   const delimiter = detectDelimiter(lines[0]);
   const rawHeaders = parseCSVLine(lines[0], delimiter);
   const headers = rawHeaders.map((h) => normalizeHeader(h));
@@ -251,6 +263,8 @@ export async function importMembersFromCSV(csvContent: string) {
   const genereIndex = findHeaderIndex(["genere", "sesso"]);
   const materialeIndex = findHeaderIndex(["materiale 2026", "materiale"]);
   const spedizioneIndex = findHeaderIndex(["spedizione"]);
+  const annoIscrizioneIndex = findHeaderIndex(["anno iscrizione", "anno iscrizione"]);
+  const paymentStatusIndex = findHeaderIndex(["pagamento", "payment"]);
   const indirizzoIndex = findHeaderIndex(["indirizzo", "via"]);
   const capIndex = findHeaderIndex(["cap"]);
   const cittaIndex = findHeaderIndex(["citta", "citta"]);
@@ -312,6 +326,7 @@ export async function importMembersFromCSV(csvContent: string) {
       const email = rawEmail?.trim().toLowerCase() ?? "";
       const mergeKey = buildMergeKey(firstName, lastName);
       const existingMember = existingMembersByKey.get(mergeKey);
+      const annoIscrizioneValue = getField(annoIscrizioneIndex);
       const nextValues = {
         firstName,
         lastName,
@@ -325,6 +340,11 @@ export async function importMembersFromCSV(csvContent: string) {
         genere: getField(genereIndex) ?? null,
         materiale2026Consegna: getField(materialeIndex) ?? null,
         spedizione: getField(spedizioneIndex) ?? null,
+        annoIscrizione:
+          annoIscrizioneValue && !Number.isNaN(Number(annoIscrizioneValue))
+            ? Number(annoIscrizioneValue)
+            : null,
+        paymentStatus: normalizePaymentStatus(getField(paymentStatusIndex)),
         indirizzo: getField(indirizzoIndex) ?? null,
         cap: getField(capIndex) ?? null,
         citta: getField(cittaIndex) ?? null,
@@ -358,6 +378,8 @@ export async function importMembersFromCSV(csvContent: string) {
             materiale2026Consegna:
               nextValues.materiale2026Consegna ?? existingMember.materiale2026Consegna,
             spedizione: nextValues.spedizione ?? existingMember.spedizione,
+            annoIscrizione: nextValues.annoIscrizione ?? existingMember.annoIscrizione,
+            paymentStatus: nextValues.paymentStatus ?? existingMember.paymentStatus,
             indirizzo: nextValues.indirizzo ?? existingMember.indirizzo,
             cap: nextValues.cap ?? existingMember.cap,
             citta: nextValues.citta ?? existingMember.citta,
@@ -403,6 +425,7 @@ export async function importMembersFromCSV(csvContent: string) {
           .values({
             organizationId: orgId,
             ...nextValues,
+            annoIscrizione: nextValues.annoIscrizione ?? new Date().getFullYear(),
           })
           .returning();
         existingMembersByKey.set(mergeKey, insertedMember);

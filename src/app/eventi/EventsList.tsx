@@ -73,6 +73,16 @@ export function EventsList({
                         />
                       </div>
                     ) : null}
+                    {e.pdfUrl ? (
+                      <div className="mt-2">
+                        <a
+                          href={`/api/events/${e.id}/pdf`}
+                          className="inline-flex items-center rounded-full border border-zinc-200 px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                        >
+                          Scarica PDF
+                        </a>
+                      </div>
+                    ) : null}
                   </td>
                   <td className="px-4 py-3">
                     {canManage ? <div className="flex items-center gap-3">

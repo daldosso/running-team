@@ -25,6 +25,14 @@ export function MemberForm({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const currentYear = new Date().getFullYear();
+  const paymentStatusOptions = [
+    { value: "", label: "— Seleziona —" },
+    { value: "pending", label: "In attesa" },
+    { value: "completed", label: "Completato" },
+    { value: "failed", label: "Fallito" },
+    { value: "refunded", label: "Rimborsato" },
+  ];
 
   return (
     <div className={className}>
@@ -57,6 +65,8 @@ export function MemberForm({
               materiale2026Consegna: (fd.get("materiale2026Consegna") as string) || undefined,
               spedizione: (fd.get("spedizione") as string) || undefined,
               genere: (fd.get("genere") as string) || undefined,
+              annoIscrizione: (fd.get("annoIscrizione") as string) || undefined,
+              paymentStatus: (fd.get("paymentStatus") as string) || undefined,
               tagliaMagliaCotone: (fd.get("tagliaMagliaCotone") as string) || undefined,
               tagliaMagliaSolar: (fd.get("tagliaMagliaSolar") as string) || undefined,
               tagliaMagliaPulsar: (fd.get("tagliaMagliaPulsar") as string) || undefined,
@@ -211,6 +221,21 @@ export function MemberForm({
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Anno iscrizione
+              </label>
+              <input
+                name="annoIscrizione"
+                type="number"
+                min="1900"
+                max="3000"
+                defaultValue={currentYear}
+                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+              />
+            </div>
+          </div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                 Materiale 2026 consegnato
               </label>
               <select
@@ -218,9 +243,24 @@ export function MemberForm({
                 className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
               >
                 <option value="">— Seleziona —</option>
-                {memberOptions?.materiale2026Options.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
+                  {memberOptions?.materiale2026Options.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Pagamento
+              </label>
+              <select
+                name="paymentStatus"
+                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+              >
+                {paymentStatusOptions.map((opt) => (
+                  <option key={opt.value || "blank"} value={opt.value}>
+                    {opt.label}
                   </option>
                 ))}
               </select>

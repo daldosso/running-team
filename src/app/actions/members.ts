@@ -6,6 +6,8 @@ import { getOrganizationId } from "@/lib/org-context";
 import { revalidatePath } from "next/cache";
 import { eq, and, inArray } from "drizzle-orm";
 
+type MemberPaymentStatus = "pending" | "completed" | "failed" | "refunded";
+
 export type MemberFormData = {
   firstName: string;
   lastName: string;
@@ -25,6 +27,8 @@ export type MemberFormData = {
   materiale2026Consegna?: string;
   spedizione?: string;
   genere?: string;
+  annoIscrizione?: string;
+  paymentStatus?: string;
   tagliaMagliaCotone?: string;
   tagliaMagliaSolar?: string;
   tagliaMagliaPulsar?: string;
@@ -54,6 +58,32 @@ const normalizeOptional = (value: unknown) => {
   if (raw === undefined) return undefined;
   const trimmed = raw.trim();
   return trimmed.length > 0 ? trimmed : null;
+};
+
+const normalizeYear = (value: unknown) => {
+  const raw = normalizeInput(value);
+  if (raw === undefined) return undefined;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const parsed = Number.parseInt(trimmed, 10);
+  if (!Number.isFinite(parsed) || parsed < 1900 || parsed > 3000) {
+    return null;
+  }
+  return parsed;
+};
+
+const normalizePaymentStatus = (
+  value: unknown
+): MemberPaymentStatus | null | undefined => {
+  const raw = normalizeInput(value);
+  if (raw === undefined) return undefined;
+  const normalized = raw.trim().toLowerCase();
+  if (!normalized) return null;
+  if (["pending", "in attesa", "attesa"].includes(normalized)) return "pending";
+  if (["completed", "completato", "pagato", "paid", "ok"].includes(normalized)) return "completed";
+  if (["failed", "fallito", "errore", "ko"].includes(normalized)) return "failed";
+  if (["refunded", "rimborsato"].includes(normalized)) return "refunded";
+  return null;
 };
 
 export async function createMember(formData: MemberFormData) {
@@ -88,6 +118,9 @@ export async function createMember(formData: MemberFormData) {
     materiale2026Consegna: normalizeOptional(formData.materiale2026Consegna) ?? null,
     spedizione: normalizeOptional(formData.spedizione) ?? null,
     genere: normalizeOptional(formData.genere) ?? null,
+    annoIscrizione:
+      normalizeYear(formData.annoIscrizione) ?? new Date().getFullYear(),
+    paymentStatus: normalizePaymentStatus(formData.paymentStatus) ?? null,
     tagliaMagliaCotone: normalizeOptional(formData.tagliaMagliaCotone) ?? null,
     tagliaMagliaSolar: normalizeOptional(formData.tagliaMagliaSolar) ?? null,
     tagliaMagliaPulsar: normalizeOptional(formData.tagliaMagliaPulsar) ?? null,
@@ -144,6 +177,9 @@ export async function updateMember(id: string, formData: MemberFormData) {
         current.materiale2026Consegna,
       spedizione: normalizeOptional(formData.spedizione) ?? current.spedizione,
       genere: normalizeOptional(formData.genere) ?? current.genere,
+      annoIscrizione: normalizeYear(formData.annoIscrizione) ?? current.annoIscrizione,
+      paymentStatus:
+        normalizePaymentStatus(formData.paymentStatus) ?? current.paymentStatus,
       tagliaMagliaCotone:
         normalizeOptional(formData.tagliaMagliaCotone) ?? current.tagliaMagliaCotone,
       tagliaMagliaSolar:

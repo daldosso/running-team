@@ -48,7 +48,36 @@ const DEFAULT_COLUMN_WIDTHS = [
   80, // Azioni
 ];
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE_OPTIONS = [10, 25, 50, 100];
+const PAYMENT_STATUS_OPTIONS = [
+  { value: "", label: "Tutti" },
+  { value: "pending", label: "In attesa" },
+  { value: "completed", label: "Completato" },
+  { value: "failed", label: "Fallito" },
+  { value: "refunded", label: "Rimborsato" },
+];
+const PAYMENT_STATUS_LABELS = new Map(
+  PAYMENT_STATUS_OPTIONS.filter((item) => item.value).map((item) => [item.value, item.label] as const)
+);
+
+const getAnnoIscrizione = (member: Member) =>
+  member.annoIscrizione ?? (member.createdAt ? new Date(member.createdAt).getFullYear() : null);
+
+const getPaymentStatus = (
+  member: Member,
+  latestPaymentByMember?: Map<
+    string,
+    {
+      status: string;
+      amount: string;
+      paidAt: Date | null;
+      createdAt: Date;
+    }
+  >
+) => member.paymentStatus ?? latestPaymentByMember?.get(member.id)?.status ?? null;
+
+const getPaymentLabel = (status: string | null) =>
+  status ? PAYMENT_STATUS_LABELS.get(status) ?? status : "—";
 
 type ImportFeedback = {
   message: string;
@@ -120,9 +149,9 @@ const getSortableValue = (
     case 10:
       return member.phone ?? "";
     case 11:
-      return member.createdAt ? new Date(member.createdAt).getFullYear().toString() : "";
+      return getAnnoIscrizione(member)?.toString() ?? "";
     case 12:
-      return latestPaymentByMember?.get(member.id)?.status ?? "";
+      return getPaymentStatus(member, latestPaymentByMember) ?? "";
     default:
       return "";
   }
@@ -202,6 +231,7 @@ export function MembersList({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isDeletingSelected, setIsDeletingSelected] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
   const tableScrollRef = useRef<HTMLDivElement | null>(null);
   const [filters, setFilters] = useState<{
     status: string | null;
@@ -322,12 +352,12 @@ export function MembersList({
     }
     if (filters.annoIscrizione) {
       result = result.filter((m) =>
-        m.createdAt ? new Date(m.createdAt).getFullYear() === filters.annoIscrizione : false
+        getAnnoIscrizione(m) === filters.annoIscrizione
       );
     }
     if (filters.payment) {
       result = result.filter((m) =>
-        latestPaymentByMember?.get(m.id)?.status === filters.payment
+        getPaymentStatus(m, latestPaymentByMember) === filters.payment
       );
     }
 
@@ -347,12 +377,12 @@ export function MembersList({
     return next;
   }, [filteredList, latestPaymentByMember, sortState]);
 
-  const totalPages = Math.max(1, Math.ceil(sortedList.length / ITEMS_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(sortedList.length / itemsPerPage));
 
   const paginatedList = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return sortedList.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [currentPage, sortedList]);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return sortedList.slice(startIndex, startIndex + itemsPerPage);
+  }, [currentPage, itemsPerPage, sortedList]);
 
   const visibleMemberIds = useMemo(
     () => paginatedList.map((member) => member.id),
@@ -424,6 +454,10 @@ export function MembersList({
   useEffect(() => {
     setCurrentPage((prev) => Math.min(prev, totalPages));
   }, [totalPages]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [itemsPerPage]);
 
   const uploadMemberPhoto = async (memberId: string, file: File) => {
     setPhotoUploading(true);
@@ -510,8 +544,8 @@ export function MembersList({
   const isSortableColumn = (index: number) => index >= 1 && index <= 12;
   const isEmpty = list.length === 0;
   const hasNoResults = !isEmpty && sortedList.length === 0;
-  const pageStart = sortedList.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1;
-  const pageEnd = Math.min(currentPage * ITEMS_PER_PAGE, sortedList.length);
+  const pageStart = sortedList.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+  const pageEnd = Math.min(currentPage * itemsPerPage, sortedList.length);
 
   const toggleMemberSelection = (memberId: string) => {
     setSelectedIds((prev) =>
@@ -594,6 +628,20 @@ export function MembersList({
           Ripristina colonne
         </button>
         <div className="flex items-center gap-2">
+          <label className="flex items-center gap-2 text-xs text-zinc-500">
+            <span>Righe</span>
+            <select
+              value={itemsPerPage}
+              onChange={(event) => setItemsPerPage(Number(event.target.value))}
+              className="h-8 rounded-md border border-zinc-200 bg-white px-2 text-sm text-zinc-700 shadow-sm focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            >
+              {ITEMS_PER_PAGE_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
           <button
             type="button"
             onClick={async () => {
@@ -797,7 +845,7 @@ export function MembersList({
                 {Array.from(
                   new Set(
                     list
-                      .map((m) => (m.createdAt ? new Date(m.createdAt).getFullYear() : null))
+                      .map((m) => getAnnoIscrizione(m))
                       .filter((y) => y !== null)
                   )
                 )
@@ -824,15 +872,9 @@ export function MembersList({
                 className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
               >
                 <option value="">— Tutti —</option>
-                {Array.from(
-                  new Set(
-                    Array.from(latestPaymentByMember?.values() ?? [])
-                      .map((p) => p.status)
-                      .filter((s) => s)
-                  )
-                ).map((status) => (
-                  <option key={status} value={status}>
-                    {status}
+                {PAYMENT_STATUS_OPTIONS.slice(1).map((status) => (
+                  <option key={status.value} value={status.value}>
+                    {status.label}
                   </option>
                 ))}
               </select>
@@ -1081,16 +1123,14 @@ export function MembersList({
                 className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
                 style={{ width: colWidths[11] }}
               >
-                {m.createdAt ? new Date(m.createdAt).getFullYear().toString() : "—"}
+                {getAnnoIscrizione(m)?.toString() ?? "—"}
               </td>,
               <td
                 key={`pagamento-${m.id}`}
                 className="px-4 py-3 text-zinc-600 dark:text-zinc-400"
                 style={{ width: colWidths[12] }}
               >
-                {latestPaymentByMember?.get(m.id)
-                  ? `${latestPaymentByMember.get(m.id)?.status ?? "—"}`
-                  : "—"}
+                {getPaymentLabel(getPaymentStatus(m, latestPaymentByMember))}
               </td>,
               <td
                 key={`azioni-${m.id}`}
@@ -1167,10 +1207,12 @@ export function MembersList({
                             citta: (fd.get("citta") as string) || undefined,
                             prov: (fd.get("prov") as string) || undefined,
                             status: (fd.get("status") as string) || undefined,
+                            annoIscrizione: (fd.get("annoIscrizione") as string) || undefined,
                             materiale2026Consegna:
                               (fd.get("materiale2026Consegna") as string) || undefined,
                             spedizione: (fd.get("spedizione") as string) || undefined,
                             genere: (fd.get("genere") as string) || undefined,
+                            paymentStatus: (fd.get("paymentStatus") as string) || undefined,
                             tagliaMagliaCotone:
                               (fd.get("tagliaMagliaCotone") as string) || undefined,
                             tagliaMagliaSolar:
@@ -1439,6 +1481,21 @@ export function MembersList({
                                   </div>
                                   <div>
                                     <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                                      Anno iscrizione
+                                    </label>
+                                    <input
+                                      name="annoIscrizione"
+                                      type="number"
+                                      min="1900"
+                                      max="3000"
+                                      defaultValue={m.annoIscrizione ?? ""}
+                                      className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                                    />
+                                  </div>
+                                </div>
+                                <div className="grid gap-5 md:grid-cols-2">
+                                  <div>
+                                    <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
                                       Materiale 2026 consegnato
                                     </label>
                                     <input
@@ -1446,6 +1503,22 @@ export function MembersList({
                                       defaultValue={m.materiale2026Consegna ?? ""}
                                       className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
                                     />
+                                  </div>
+                                  <div>
+                                    <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                                      Pagamento
+                                    </label>
+                                    <select
+                                      name="paymentStatus"
+                                      defaultValue={m.paymentStatus ?? ""}
+                                      className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                                    >
+                                      {PAYMENT_STATUS_OPTIONS.map((status) => (
+                                        <option key={status.value || "blank"} value={status.value}>
+                                          {status.label}
+                                        </option>
+                                      ))}
+                                    </select>
                                   </div>
                                 </div>
                                 <div className="grid gap-5 md:grid-cols-2">

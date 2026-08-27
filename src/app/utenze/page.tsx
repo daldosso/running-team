@@ -2,8 +2,9 @@ import { db } from "@/lib/db";
 import { members, users } from "@/lib/db/schema";
 import { getOrganizationId } from "@/lib/org-context";
 import { asc, eq } from "drizzle-orm";
-import { linkUserToMember } from "@/app/actions/users";
+import { deleteUser, linkUserToMember, setUserPassword } from "@/app/actions/users";
 import NewUserForm from "@/app/utenze/NewUserForm";
+import { DeleteUserForm } from "@/app/utenze/DeleteUserForm";
 
 export const dynamic = "force-dynamic";
 
@@ -54,7 +55,7 @@ export default async function UtenzePage() {
             <table className="min-w-[860px] w-full table-fixed text-left text-sm whitespace-nowrap">
               <thead>
                 <tr className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50">
-                  {["Nome", "Email", "Ruolo", "Iscritto", "Creata"].map((label) => (
+                  {["Nome", "Email", "Ruolo", "Iscritto", "Password", "Azioni", "Creata"].map((label) => (
                     <th key={label} className="px-4 py-3 font-medium">
                       {label}
                     </th>
@@ -103,6 +104,33 @@ export default async function UtenzePage() {
                           Salva
                         </button>
                       </form>
+                    </td>
+                    <td className="px-4 py-3">
+                      <form
+                        action={async (fd) => {
+                          "use server";
+                          const password = (fd.get("password") as string) || "";
+                          await setUserPassword(u.id, password);
+                        }}
+                        className="flex items-center gap-2"
+                      >
+                        <input
+                          name="password"
+                          type="password"
+                          minLength={8}
+                          placeholder="Nuova password"
+                          className="w-40 rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                        />
+                        <button
+                          type="submit"
+                          className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                        >
+                          Aggiorna
+                        </button>
+                      </form>
+                    </td>
+                    <td className="px-4 py-3">
+                      <DeleteUserForm userId={u.id} />
                     </td>
                     <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
                       {u.createdAt

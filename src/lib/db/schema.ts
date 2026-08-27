@@ -1,6 +1,7 @@
 import {
   pgTable,
   text,
+  integer,
   timestamp,
   uuid,
   decimal,
@@ -188,6 +189,8 @@ export const members = pgTable(
     materiale2026Consegna: text("materiale_2026_consegnato"),
     spedizione: text("spedizione"),
     genere: text("genere"),
+    annoIscrizione: integer("anno_iscrizione"),
+    paymentStatus: paymentStatusEnum("payment_status"),
     photoUrl: text("photo_url"),
     // Taglie
     tagliaMagliaCotone: text("taglia_maglia_cotone"),
@@ -356,6 +359,8 @@ export const events = pgTable(
     time: text("time"), // HH:MM
     location: text("location"),
     raceId: uuid("race_id").references(() => races.id, { onDelete: "set null" }),
+    pdfUrl: text("pdf_url"),
+    pdfFilename: text("pdf_filename"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),

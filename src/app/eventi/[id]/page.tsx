@@ -79,6 +79,17 @@ export default async function EventoDetailPage({
             className="text-zinc-600 dark:text-zinc-400"
           />
         ) : null}
+        {event.pdfUrl ? (
+          <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+            PDF allegato:{" "}
+            <a
+              href={`/api/events/${eventId}/pdf`}
+              className="font-medium hover:underline"
+            >
+              {event.pdfFilename ?? "scarica il documento"}
+            </a>
+          </p>
+        ) : null}
         {race ? (
           <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
             Collegato a gara:{" "}

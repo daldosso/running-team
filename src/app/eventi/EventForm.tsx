@@ -122,6 +122,7 @@ export function EventForm({
         <form
           action={async (fd) => {
             setError(null);
+            const pdfFile = fd.get("pdf");
             const payload = {
               title: (fd.get("title") as string) || "",
               description: (fd.get("description") as string) || undefined,
@@ -136,6 +137,22 @@ export function EventForm({
             if (!res.ok) {
               setError(res.error ?? "Errore");
               return;
+            }
+            const eventId = isEditing && event ? event.id : "id" in res ? res.id : undefined;
+            if (pdfFile instanceof File && pdfFile.size > 0 && eventId) {
+              const pdfFormData = new FormData();
+              pdfFormData.set("file", pdfFile);
+              const uploadRes = await fetch(`/api/events/${eventId}/pdf`, {
+                method: "POST",
+                body: pdfFormData,
+              });
+              const uploadData = (await uploadRes.json().catch(() => null)) as
+                | { error?: string }
+                | null;
+              if (!uploadRes.ok) {
+                setError(uploadData?.error ?? "PDF salvato ma upload fallito");
+                return;
+              }
             }
             if (!isEditing) {
               setOpen(false);
@@ -207,9 +224,36 @@ export function EventForm({
                 {races.map((r) => (
                   <option key={r.id} value={r.id}>
                     {r.name} ({r.raceDate})
-                  </option>
-                ))}
+                </option>
+              ))}
               </select>
+            </div>
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                PDF allegato (opzionale)
+              </label>
+              <input
+                name="pdf"
+                type="file"
+                accept="application/pdf,.pdf"
+                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 file:mr-4 file:rounded-md file:border-0 file:bg-zinc-200 file:px-3 file:py-2 file:text-sm file:font-medium file:text-zinc-900 hover:file:bg-zinc-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white dark:file:bg-zinc-700 dark:file:text-white dark:hover:file:bg-zinc-600"
+              />
+              <p className="mt-1 text-xs text-zinc-500">
+                Carica qui un solo PDF: chi gestisce l&apos;area admin potrà sostituirlo quando serve, mentre gli altri lo scaricano soltanto.
+              </p>
+              {event?.pdfUrl ? (
+                <p className="mt-2 text-xs text-zinc-500">
+                  PDF attuale:{" "}
+                  <a
+                    href={`/api/events/${event.id}/pdf`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline underline-offset-2"
+                  >
+                    {event.pdfFilename ?? "scarica"}
+                  </a>
+                </p>
+              ) : null}
             </div>
             <div className="sm:col-span-2">
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
