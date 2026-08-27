@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { members, users } from "@/lib/db/schema";
 import { getOrganizationId } from "@/lib/org-context";
 import { asc, eq } from "drizzle-orm";
-import { deleteUser, linkUserToMember, setUserPassword } from "@/app/actions/users";
+import { linkUserToMember, setUserPassword } from "@/app/actions/users";
 import NewUserForm from "@/app/utenze/NewUserForm";
 import { DeleteUserForm } from "@/app/utenze/DeleteUserForm";
 
@@ -52,7 +52,7 @@ export default async function UtenzePage() {
       ) : (
         <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <div className="overflow-x-auto">
-            <table className="min-w-[860px] w-full table-fixed text-left text-sm whitespace-nowrap">
+            <table className="min-w-[980px] w-full table-auto text-left text-sm whitespace-nowrap">
               <thead>
                 <tr className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50">
                   {["Nome", "Email", "Ruolo", "Iscritto", "Password", "Azioni", "Creata"].map((label) => (
@@ -112,24 +112,24 @@ export default async function UtenzePage() {
                           const password = (fd.get("password") as string) || "";
                           await setUserPassword(u.id, password);
                         }}
-                        className="flex items-center gap-2"
+                        className="flex flex-col gap-2 sm:flex-row sm:items-center"
                       >
                         <input
                           name="password"
                           type="password"
                           minLength={8}
                           placeholder="Nuova password"
-                          className="w-40 rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
+                          className="w-full rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900 sm:w-40 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white"
                         />
                         <button
                           type="submit"
-                          className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                          className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 sm:w-fit dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
                         >
                           Aggiorna
                         </button>
                       </form>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 align-middle">
                       <DeleteUserForm userId={u.id} />
                     </td>
                     <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">

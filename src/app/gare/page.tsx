@@ -2,7 +2,7 @@ import { getOrganizationId } from "@/lib/org-context";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { events, members, races, users } from "@/lib/db/schema";
-import { and, desc, eq, ilike, or } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import Link from "next/link";
 import { RacesList } from "./RacesList";
 import { RaceForm } from "./RaceForm";
@@ -30,7 +30,6 @@ export default async function GarePage() {
   let runnerEmail: string | null = null;
   let latestEvents: typeof events.$inferSelect[] = [];
   let latestRaces: typeof races.$inferSelect[] = [];
-  let discountEvents: typeof events.$inferSelect[] = [];
 
   if (isRunner && session?.userId) {
     const [userRow] = await db
@@ -52,7 +51,7 @@ export default async function GarePage() {
     runnerWelcome = displayName;
     runnerEmail = userRow?.email ?? null;
 
-    [latestEvents, latestRaces, discountEvents] = await Promise.all([
+    [latestEvents, latestRaces] = await Promise.all([
       db
         .select()
         .from(events)
@@ -65,31 +64,8 @@ export default async function GarePage() {
         .where(eq(races.organizationId, orgId))
         .orderBy(desc(races.raceDate))
         .limit(5),
-      db
-        .select()
-        .from(events)
-        .where(
-          and(
-            eq(events.organizationId, orgId),
-            or(
-              ilike(events.title, "%sconto%"),
-              ilike(events.description, "%sconto%"),
-              ilike(events.description, "%codice%")
-            )
-          )
-        )
-        .orderBy(desc(events.date))
-        .limit(5),
     ]);
   }
-
-  const extractDiscountCode = (text: string | null) => {
-    if (!text) return null;
-    const match =
-      text.match(/codice\s*[:\-]\s*([A-Z0-9_-]{4,})/i) ||
-      text.match(/\b([A-Z0-9]{6,})\b/);
-    return match ? match[1] : null;
-  };
 
   const pastelTiles = [
     {
@@ -171,7 +147,7 @@ export default async function GarePage() {
       )}
 
       {isRunner ? (
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-5">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-base font-semibold sm:text-lg">Informazioni generali</h2>
@@ -259,49 +235,6 @@ export default async function GarePage() {
             )}
           </div>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-5">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-base font-semibold sm:text-lg">Sconti attivi</h2>
-              <Link href="/eventi" className="text-xs text-zinc-500 hover:text-zinc-700 sm:text-sm">
-                Tutti
-              </Link>
-            </div>
-            {discountEvents.length === 0 ? (
-              <p className="text-sm text-zinc-500">Nessuno sconto disponibile.</p>
-            ) : (
-              <ul className="space-y-2 text-sm">
-                {discountEvents.map((eventItem) => {
-                  const code =
-                    extractDiscountCode(eventItem.description) ||
-                    extractDiscountCode(eventItem.title);
-                  const tile = tileClass(`${eventItem.title}-${code ?? ""}`);
-                  return (
-                    <li
-                      key={eventItem.id}
-                      className={`relative overflow-hidden rounded-lg border px-3 py-2 ${tile.container}`}
-                    >
-                      <span className={`pointer-events-none absolute inset-y-0 left-0 w-1 ${tile.bar}`} />
-                      <div className="flex flex-col gap-1">
-                        <div className="font-semibold leading-snug text-white">
-                          {eventItem.title}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-300">
-                          <span>{eventItem.date}</span>
-                          {code ? (
-                            <span
-                              className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${tile.badge}`}
-                            >
-                              {code}
-                            </span>
-                          ) : null}
-                        </div>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
         </div>
       ) : null}
 
